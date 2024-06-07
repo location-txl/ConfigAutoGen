@@ -14,6 +14,8 @@ dependencies{
     implementation(libs.json.simple)
     implementation(libs.agp.api)
     implementation(libs.agp.tool)
+    implementation(libs.poet.java)
+    implementation(libs.poet.kotlin)
 
 }
 //com.location.configGen

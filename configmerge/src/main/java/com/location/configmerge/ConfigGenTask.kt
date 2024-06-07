@@ -1,5 +1,6 @@
 package com.location.configmerge
 
+import com.location.configmerge.codeGen.FileCreate
 import com.location.configmerge.config.ConfigHeader
 import com.location.configmerge.config.JsonData
 import com.location.configmerge.config.readJsonFile
@@ -46,6 +47,11 @@ abstract class ConfigGenTask:DefaultTask() {
         }
         println("outputDir = ${outputDir.get().asFile.absolutePath}")
         val configSourceList = mergeFiles()
+        configSourceList.forEach {
+            FileCreate(
+                "", "", it.json, "dd"
+            ).create()
+        }
 
 
     }
