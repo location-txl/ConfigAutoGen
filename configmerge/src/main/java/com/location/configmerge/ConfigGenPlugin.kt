@@ -3,7 +3,6 @@ package com.location.configmerge
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
-import com.location.configmerge.task.ConfigGenTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -69,10 +68,11 @@ class ConfigGenPlugin : Plugin<Project> {
                 }Config",
                 ConfigGenTask::class.java
             ) { task ->
-                task.souceDirs.set(project.files(mergeDirs.map {mergeName ->
+                task.sourceDirs.set(project.files(mergeDirs.map { mergeName ->
                     project.file("src/config/${mergeName}")
                 }))
                 task.outputDir.set(File("${project.configMergeJavaSourceDir}${it.name}${File.separator}"))
+                task.debug = DEBUG
             }
 
             if (DEBUG) {
