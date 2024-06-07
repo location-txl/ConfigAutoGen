@@ -6,7 +6,7 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         maven{
-            url = uri("${rootProject.projectDir.absolutePath}/configmerge/build/repo")
+            url = uri("${rootDir.absolutePath}/localRepo")
         }
     }
 }
@@ -16,7 +16,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven{
-            url = uri("${rootProject.projectDir.absolutePath}/configmerge/build/repo")
+            url = uri("${rootDir.absolutePath}/localRepo")
         }
     }
 }

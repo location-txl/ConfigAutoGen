@@ -55,7 +55,7 @@ afterEvaluate {
         }
         repositories {
             maven {
-                url = uri("$buildDir/repo")
+                url = uri("${rootDir.absolutePath}/localRepo")
             }
         }
     }

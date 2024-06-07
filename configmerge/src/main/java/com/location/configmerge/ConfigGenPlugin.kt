@@ -3,9 +3,11 @@ package com.location.configmerge
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
+import com.location.configmerge.task.ConfigGenTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import java.io.File
 
 /**
  *
@@ -59,11 +61,24 @@ class ConfigGenPlugin : Plugin<Project> {
                 toList()
             }
 
+            val task = project.tasks.create(
+                "generate${
+                    it.name.replaceFirstChar {name ->
+                        if (name.isLowerCase()) name.uppercase() else name.toString()
+                    }
+                }Config",
+                ConfigGenTask::class.java
+            ) { task ->
+                task.souceDirs.set(project.files(mergeDirs.map {mergeName ->
+                    project.file("src/config/${mergeName}")
+                }))
+                task.outputDir.set(File("${project.configMergeJavaSourceDir}${it.name}${File.separator}"))
+            }
+
             if (DEBUG) {
                 println("mergeDirs = $mergeDirs")
             }
-
-
+            it.registerJavaGeneratingTask(task, task.outputDir.get().asFile)
 
         }
     }
@@ -80,7 +95,7 @@ class ConfigGenPlugin : Plugin<Project> {
                 extension.libraryVariants.all(action)
             }
             else -> throw GradleException(
-                "config-merge must use android app or library"
+                "config gen must use android app or library"
             )
         }
     }
