@@ -47,11 +47,11 @@ abstract class ConfigGenTask:DefaultTask() {
         }
         println("outputDir = ${outputDir.get().asFile.absolutePath}")
         val configSourceList = mergeFiles()
-        configSourceList.forEach {
-            FileCreate(
-                "", "", it.json, "dd"
-            ).create()
-        }
+//        configSourceList.forEach {
+//            FileCreate(
+//                "", "", it.json, "dd"
+//            ).create()
+//        }
 
 
     }

@@ -1,6 +1,7 @@
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("java-gradle-plugin")
+//    id("java-gradle-plugin")
+    id("java-library")
     alias(libs.plugins.org.jetbrains.kotlin.jvm)
     id("maven-publish")
 }
@@ -13,6 +14,7 @@ java {
 
 
 dependencies{
+    implementation(gradleApi())
     implementation(libs.json.simple)
     implementation(libs.agp.api)
     implementation(libs.agp.tool)
@@ -22,16 +24,9 @@ dependencies{
 }
 //com.location.configGen
 
-val ARTIFACT_ID = "com.location.configGen"
+val ARTIFACT_ID = "configGen-core"
 
-gradlePlugin {
-    plugins {
-        create("com.location.configGen") {
-            id = ARTIFACT_ID
-            implementationClass = "com.location.configmerge.ConfigGenPlugin"
-        }
-    }
-}
+
 tasks.register("publishSourcesJar", Jar::class) {
     archiveClassifier.set("sources")
     from(sourceSets.getByName("main").allSource)
@@ -48,7 +43,7 @@ afterEvaluate {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])
                 groupId = "com.location.configGen"
-                artifactId = "$ARTIFACT_ID.gradle.plugin"
+                artifactId = ARTIFACT_ID
 
                 version = "1.0.1"
                 artifact(tasks.getByName("publishSourcesJar"))

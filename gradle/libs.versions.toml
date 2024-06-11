@@ -31,5 +31,5 @@ agp-tool = { group = "com.android.tools.build", name = "gradle", version.ref = "
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org-jetbrains-kotlin-jvm" }
-config-merge = { id = "com.location.configGen", version = "1.0.1" }
+config-merge = { id = "com.location.configGen-java", version = "1.0.1" }
 
