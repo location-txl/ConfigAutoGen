@@ -10,8 +10,7 @@ import org.json.simple.JSONArray
  */
 
 
-
-
+data class JsArrayType(val type: Any, val isNull: Boolean)
 
 
 

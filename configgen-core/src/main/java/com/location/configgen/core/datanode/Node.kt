@@ -53,14 +53,19 @@ val Any.valueType: ValueType
     }
 
 
-
-enum class ValueType(val typeName: String, val type:Class<*>) {
-    STRING("String", String::class.java),
-    INT("Int", Int::class.java),
-    BOOLEAN("Boolean", Boolean::class.java),
-    DOUBLE("Double", Double::class.java),
-    LONG("Long", Long::class.java),
-    FLOAT("Float", Float::class.java),
+/**
+ *
+ * @param typeName 类型名称
+ * @param type 类型
+ * @param groupId 类型分组 相同分组的类型可以向上提升
+ */
+enum class ValueType(val typeName: String, val type:Class<*>, val groupId:Int) {
+    STRING("String", String::class.java, 0),
+    INT("Int", Int::class.java, 1),
+    LONG("Long", Long::class.java, 1),
+    BOOLEAN("Boolean", Boolean::class.java, 2),
+    FLOAT("Float", Float::class.java, 3),
+    DOUBLE("Double", Double::class.java, 3),
 }
 
 

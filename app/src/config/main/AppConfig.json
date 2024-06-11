@@ -4,6 +4,23 @@
     "develop": true,
     "release_url": "http://localhost:3000"
   },
+  "users": [
+    {
+        "name": null,
+        "age": 20,
+        "email": "",
+        "config": [
+          "develop",
+          "123"
+        ]
+    },
+    {
+        "name": "Jane",
+        "age": 30,
+        "email": null,
+      "like": 1
+    }
+  ],
   "ids": [
     "1",
     "2",

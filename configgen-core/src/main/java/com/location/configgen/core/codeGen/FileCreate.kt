@@ -1,7 +1,9 @@
 package com.location.configgen.core.codeGen
 
 import com.location.configgen.core.datanode.Node
+import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.core.datanode.nodeType
+import com.location.configgen.core.datanode.valueType
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -21,7 +23,7 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
     /**
      * 是否生成不稳定的数组 如果为 true 则会扫描整个数组的所有元素 生产一个最全的Object
      */
-    private val unstableArray:Boolean = false
+    private val unstableArray:Boolean = true
 ) {
 
     fun create(){
@@ -77,11 +79,49 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
     }
 
 
-    private fun parseJsArrayType(jsArray: JSONArray):Map<String,Any>{
-        val filedMap = mutableMapOf<String,Any>()
+    private fun parseJsArrayType(jsArray: JSONArray):Map<String,JsArrayType>{
+        val filedMap = mutableMapOf<String,JsArrayType>()
         var index = 0
         do {
-            index++
+            val obj = jsArray[index++] as JSONObject
+            obj.forEach { k, v ->
+                val oldType = filedMap[k]
+                when(v){
+                    is JSONArray -> {
+                        if (oldType == null && v.isEmpty()) {
+                            filedMap[k.toString()] = JsArrayType(Unit, false)
+                        } else if(v.isNotEmpty()) {
+                            filedMap[k.toString()] =
+                                oldType?.copy(type = parseJsArrayType(v)) ?: JsArrayType(
+                                    parseJsArrayType(v), false
+                                )
+                        }
+                    }
+                    else -> {
+                        if(oldType == null){
+                            filedMap[k.toString()] = JsArrayType(v?.valueType ?: Unit, v == null)
+                        }else{
+                            if(v == null){
+                                filedMap[k.toString()] = oldType.copy(isNull = true)
+                            }else {
+                                val valueType = v.valueType
+                                if(oldType.type.javaClass == valueType.javaClass) {
+                                    val oldValueType = oldType.type as ValueType
+                                    if(oldValueType.groupId == valueType.groupId && oldValueType.ordinal < valueType.ordinal){
+                                        //可以向上提升
+                                        filedMap[k.toString()] = oldType.copy(type = valueType)
+                                    }
+                                }else{
+                                    //直接替换类型
+                                    filedMap[k.toString()] = oldType.copy(type = valueType)
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+            }
         }while (unstableArray && index < jsArray.size )
         return filedMap
     }
@@ -89,16 +129,19 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
     private fun parseJsonArray(typeSpecBuilder: T, key:String, jsArray:JSONArray, innerPkgName:String){
         when(jsArray[0]){
             is JSONObject -> {
-                val typeObject = if(unstableArray){
-
-                }else{
-
+                parseJsArrayType(jsArray).also {
+                    println("parseJsonArray obj:$it")
                 }
-                val innerClass = createTypeSpecBuilder(key.className, true).apply {
-                    addJavaDoc("key:$key - value:$jsArray")
-                }
-                parseJsonObj(innerClass, jsArray[0] as JSONObject)
-                typeSpecBuilder.addType(innerClass.build())
+//                val typeObject = if(unstableArray){
+//
+//                }else{
+//
+//                }
+//                val innerClass = createTypeSpecBuilder(key.className, true).apply {
+//                    addJavaDoc("key:$key - value:$jsArray")
+//                }
+//                parseJsonObj(innerClass, jsArray[0] as JSONObject)
+//                typeSpecBuilder.addType(innerClass.build())
             }
             is JSONArray -> {
                 println("not support array in array")
