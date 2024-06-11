@@ -1,9 +1,9 @@
-package com.location.configmerge
+package com.location.configgen.core
 
-import com.location.configmerge.codeGen.FileCreate
-import com.location.configmerge.config.ConfigHeader
-import com.location.configmerge.config.JsonData
-import com.location.configmerge.config.readJsonFile
+import com.location.configgen.core.codeGen.FileCreate
+import com.location.configgen.core.config.ConfigHeader
+import com.location.configgen.core.config.JsonData
+import com.location.configgen.core.config.readJsonFile
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty

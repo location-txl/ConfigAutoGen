@@ -1,5 +1,8 @@
 import java.net.URI
 
+include(":configgen-java")
+
+
 pluginManagement {
     repositories {
         google()
@@ -23,4 +26,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ConfigAutoGen"
 include(":app")
-include(":configmerge")
+include(":configgen-core")

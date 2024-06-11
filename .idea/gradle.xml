@@ -10,7 +10,8 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/configmerge" />
+            <option value="$PROJECT_DIR$/configgen-core" />
+            <option value="$PROJECT_DIR$/configgen-java" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

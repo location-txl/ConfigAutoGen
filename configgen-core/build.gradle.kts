@@ -10,6 +10,8 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
+
+
 dependencies{
     implementation(libs.json.simple)
     implementation(libs.agp.api)
@@ -27,8 +29,6 @@ gradlePlugin {
         create("com.location.configGen") {
             id = ARTIFACT_ID
             implementationClass = "com.location.configmerge.ConfigGenPlugin"
-//            version = "1.0.2"
-
         }
     }
 }

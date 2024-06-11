@@ -1,4 +1,4 @@
-package com.location.configmerge
+package com.location.configgen.core
 
 import org.gradle.api.Project
 import java.io.File

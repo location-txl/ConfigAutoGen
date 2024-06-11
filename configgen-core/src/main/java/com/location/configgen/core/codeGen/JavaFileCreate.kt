@@ -1,6 +1,5 @@
-package com.location.configmerge.codeGen
+package com.location.configgen.core.codeGen
 
-import com.android.build.gradle.BaseExtension
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
@@ -10,7 +9,6 @@ import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
 import com.squareup.javapoet.TypeSpec.Builder
-import org.gradle.api.Project
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -54,9 +52,9 @@ class JavaFileCreate(
         val javaFile = JavaFile.builder(packageName, classSpec.build())
             .addFileComment("""
                 config-merge plugin automatically generated, please do not modify
-                time:${currentTime}
+                time:$currentTime
                 author:tianxiaolong
-                Version:${GENERATE_VERSION}
+                Version:$GENERATE_VERSION
                 SourceCode:gitLab/RobotUI/config-merge
             """.trimIndent())
             .build()
@@ -173,6 +171,16 @@ class JavaFileCreate(
                     )
 
                     controlFlow("if(${field.name} == null)") {
+                        /**
+                         * synchronized
+                         */
+                        /**
+                         * synchronized
+                         */
+                        /**
+                         * synchronized
+                         */
+
                         /**
                          * synchronized
                          */

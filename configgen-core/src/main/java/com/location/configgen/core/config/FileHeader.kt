@@ -1,4 +1,4 @@
-package com.location.configmerge.config
+package com.location.configgen.core.config
 
 import java.io.File
 

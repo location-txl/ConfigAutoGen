@@ -1,4 +1,4 @@
-package com.location.configmerge.codeGen
+package com.location.configgen.core.codeGen
 
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec

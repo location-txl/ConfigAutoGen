@@ -1,8 +1,7 @@
-package com.location.configmerge.codeGen
+package com.location.configgen.core.codeGen
 
-import com.location.configmerge.datanode.Node
-import com.location.configmerge.datanode.nodeType
-import com.squareup.kotlinpoet.TypeSpec
+import com.location.configgen.core.datanode.Node
+import com.location.configgen.core.datanode.nodeType
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -14,7 +13,7 @@ import java.util.Locale
  * time：2024/6/7 17:19
  * description：
  */
-class FileCreate(
+abstract class FileCreate(
     protected val packageName:String,
     protected val outputDir: String,
     protected val json: String,
@@ -24,18 +23,50 @@ class FileCreate(
     fun create(){
         val jsonParser = JSONParser()
         val jsPoint = jsonParser.parse(json)
-
-        val node = parseJsonObj(jsPoint as JSONObject)
-        println("node = $node")
-
+        val classSpec = createTypeSpecBuilder(className).apply {
+            addJavaDoc("RawJson:$json")
+        }
     }
 
-    private fun parseJsonObj(jsObj: JSONObject): Node {
-        val node = Node.ObjectNode(className, mutableMapOf())
+
+
+    abstract fun createTypeSpecBuilder(className: String): TypeSpecBuilderWrapper
+
+
+    private fun parseJsonObj(typeSpecBuilder: TypeSpecBuilderWrapper, jsObj: JSONObject){
+
         jsObj.forEach { k, v ->
             when (v) {
                 is JSONObject -> {
-                    val childNode = parseJsonObj(v)
+                    val innerClass = createTypeSpecBuilder(k.toString().className).apply {
+                        addJavaDoc("key:$k - value:$v")
+                    }
+                    parseJsonObj(innerClass, v)
+                    typeSpecBuilder.addType(innerClass.build())
+                }
+
+                is JSONArray -> {
+
+                }
+
+                else -> {
+                    addStaticFiled(typeSpecBuilder, k.toString(), v)
+                }
+
+            }
+        }
+    }
+
+
+    private fun parseJsonNode(jsObj: JSONObject): Node {
+        val node = Node.ObjectNode(className, mutableMapOf())
+        jsObj.forEach { k, v ->
+            if(v == null){
+                return@forEach
+            }
+            when (v) {
+                is JSONObject -> {
+                    val childNode = parseJsonNode(v)
                     node.property[k.toString().fieldName] = childNode
                 }
 
@@ -62,11 +93,13 @@ class FileCreate(
             return format.format(java.util.Date())
         }
 
-
+    abstract fun addStaticFiled(typeSpecBuilder: TypeSpecBuilderWrapper, key: String, v: Any)
 
 }
 
-private val String.fieldName
+
+
+    private val String.fieldName
     get() = if (this.contains("_")) {
         this.split("_").joinToString("") {
             it.replaceFirstChar { firstChar ->

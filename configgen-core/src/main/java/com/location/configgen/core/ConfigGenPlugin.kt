@@ -1,4 +1,4 @@
-package com.location.configmerge
+package com.location.configgen.core
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension

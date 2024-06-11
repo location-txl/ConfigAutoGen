@@ -1,4 +1,4 @@
-package com.location.configmerge.datanode
+package com.location.configgen.core.datanode
 
 
 /**
@@ -15,7 +15,7 @@ sealed interface Node{
     data class ValueNode(
         val value: Any,
         val type: Type,
-    ) : Node{
+    ) : Node {
         enum class Type(val typeName: String) {
             STRING("String"),
             INT("Int"),
@@ -27,7 +27,7 @@ sealed interface Node{
     }
 }
 
-val Any.nodeType:Node.ValueNode.Type
+val Any.nodeType: Node.ValueNode.Type
     get() = when (this) {
         is String -> Node.ValueNode.Type.STRING
         is Int -> Node.ValueNode.Type.INT

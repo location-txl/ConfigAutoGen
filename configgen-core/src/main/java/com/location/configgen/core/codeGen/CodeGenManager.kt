@@ -1,6 +1,6 @@
-package com.location.configmerge.codeGen
+package com.location.configgen.core.codeGen
 
-import com.location.configmerge.ConfigGenTask
+import com.location.configgen.core.ConfigGenTask
 
 /**
  *
