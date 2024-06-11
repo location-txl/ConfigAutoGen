@@ -28,4 +28,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ConfigAutoGen"
 include(":app")
-include(":configgen-core")
+//include(":configgen-core")

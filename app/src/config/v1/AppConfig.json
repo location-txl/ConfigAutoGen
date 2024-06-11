@@ -5,12 +5,6 @@
     "name": "v1App",
     "v1_url": "https://www14.v1host.com/v1sdktesting",
     "release_url": "release+url"
-  },
-  "uList": [
-    {
-      "name": "v1App",
-      "v1_url": "https://www14.v1host.com/v1sdktesting",
-      "release_url": "release+url"
-    }
-  ]
+  }
+
 }

@@ -1,5 +1,8 @@
 package com.location.configgen.core.datanode
 
+import com.location.configgen.core.codeGen.className
+import java.lang.reflect.Type
+
 
 /**
  *
@@ -38,9 +41,47 @@ val Any.nodeType: Node.ValueNode.Type
         else -> throw IllegalArgumentException("Unsupported type: ${this::class.java}")
     }
 
+val Any.valueType: ValueType
+    get() = when (this) {
+        is String -> ValueType.STRING
+        is Int -> ValueType.INT
+        is Boolean -> ValueType.BOOLEAN
+        is Double -> if (this > Float.MAX_VALUE) ValueType.DOUBLE else ValueType.FLOAT
+        is Long -> if (this > Int.MAX_VALUE) ValueType.LONG else ValueType.INT
+        is Float -> ValueType.FLOAT
+        else -> throw IllegalArgumentException("Unsupported type: ${this::class.java}")
+    }
 
 
 
+enum class ValueType(val typeName: String, val type:Class<*>) {
+    STRING("String", String::class.java),
+    INT("Int", Int::class.java),
+    BOOLEAN("Boolean", Boolean::class.java),
+    DOUBLE("Double", Double::class.java),
+    LONG("Long", Long::class.java),
+    FLOAT("Float", Float::class.java),
+}
 
 
+val String.fieldName
+    get() = if (this.contains("_")) {
+        this.split("_").joinToString("") {
+            it.replaceFirstChar { firstChar ->
+                if (firstChar.isUpperCase()) firstChar.lowercase() else firstChar.toString()
+            }
+        }
 
+    } else {
+        this.replaceFirstChar {
+            if (it.isUpperCase()) {
+                it.lowercase()
+            } else {
+                it.toString()
+            }
+        }
+    }
+
+
+val String.methodName
+    get() = "get${this.className}"

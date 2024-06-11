@@ -73,6 +73,7 @@ class ConfigGenPlugin : Plugin<Project> {
                 }))
                 task.outputDir.set(File("${project.configMergeJavaSourceDir}${it.name}${File.separator}"))
                 task.debug = DEBUG
+                task.packageName = defaultPackage
             }
 
             if (DEBUG) {

@@ -1,5 +1,6 @@
 package com.location.configgen.core.codeGen
 
+import com.location.confimerge_java.fieldSpec
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
@@ -618,11 +619,7 @@ fun parameterSpec(
     body: ParameterSpec.Builder.() -> Unit = {}
 ): ParameterSpec = ParameterSpec.builder(type, name).apply(body).build()
 
-fun fieldSpec(
-    name: String,
-    type: TypeName,
-    body: FieldSpec.Builder.() -> Unit = {}
-): FieldSpec = FieldSpec.builder(type, name).apply(body).build()
+
 
 fun String.toClassName(): ClassName = ClassName.bestGuess(this)
 

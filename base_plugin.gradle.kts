@@ -4,30 +4,22 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.jvm)
     id("maven-publish")
 }
-//apply(from = "${rootProject.rootDir.absolutePath}/configgen-core/build.gradle.kts")
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-sourceSets {
-    main {
-        java {
-            srcDir("${rootProject.rootDir.absolutePath}/configgen-core/src/main/java")
-        }
-    }
-}
-
 
 
 dependencies{
-    implementation(libs.json.simple)
-    implementation(libs.agp.api)
-    implementation(libs.agp.tool)
+
+    implementation(project(":configgen-core"))
     implementation(libs.poet.java)
-    implementation(libs.poet.kotlin)
+
+
 }
+//com.location.configGen
 
 val ARTIFACT_ID = "com.location.configGen-java"
 

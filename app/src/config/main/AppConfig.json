@@ -4,15 +4,52 @@
     "develop": true,
     "release_url": "http://localhost:3000"
   },
- "uList": [
-    {
-      "name": "张三",
-      "age": 18
-    },
-    {
-      "name": "李四",
-      "age": 20
-    }
+  "ids": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10"
+  ],
+  "intIds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "floatIds": [
+    1.1,
+    2.2,
+    3.3,
+    4.4,
+    5.5,
+    6.6,
+    7.7,
+    8.8,
+    9.9,
+    10.10
+  ],
+  "bools": [
+    true,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false
   ]
-
 }

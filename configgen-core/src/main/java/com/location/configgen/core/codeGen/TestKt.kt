@@ -15,18 +15,14 @@ import com.squareup.kotlinpoet.TypeSpec
  */
 fun main() {
     val className = "Person"
-
     val nameProperty = PropertySpec.builder("name", String::class)
         .initializer("name")
         .build()
-
     val ageProperty = PropertySpec.builder("age", Int::class)
         .initializer("age")
         .build()
-
     val personClass = TypeSpec.classBuilder(className)
         .addModifiers(KModifier.DATA)
-
         .addProperty(nameProperty)
         .addProperty(ageProperty)
         .primaryConstructor(
@@ -47,6 +43,23 @@ fun main() {
 
 
     file.writeTo(System.out)
+
+
+    val map = mutableMapOf<Int,Int>()
+    map[1] = 1
+    map[2] = 2
+    map[2] = 2
+
+    val map2 = mutableMapOf<Int, Int>()
+
+    map2[2] = 2
+    map2[1] = 1
+    map2[6] = 1
+
+    println(map == map2)
+    println(map.hashCode())
+    println(map2.hashCode())
+
 }
 
 
