@@ -17,6 +17,12 @@ sourceSets {
             srcDir("${rootProject.rootDir.absolutePath}/configgen-core/src/main/java")
         }
     }
+    test {
+        kotlin {
+            srcDir("${rootProject.rootDir.absolutePath}/configgen-core/src/test/kotlin")
+        }
+    }
+
 }
 
 
@@ -27,6 +33,9 @@ dependencies{
     implementation(libs.agp.tool)
     implementation(libs.poet.java)
     implementation(libs.poet.kotlin)
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
+
 }
 
 val ARTIFACT_ID = "com.location.configGen-java"

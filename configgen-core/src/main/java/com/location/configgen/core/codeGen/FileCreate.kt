@@ -4,6 +4,8 @@ import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.core.datanode.nodeType
 import com.location.configgen.core.datanode.valueType
+import groovy.transform.VisibilityOptions
+import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -79,27 +81,65 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
     }
 
 
-    private fun parseJsArrayType(jsArray: JSONArray):Map<String,JsArrayType>{
-        val filedMap = mutableMapOf<String,JsArrayType>()
+    @VisibleForTesting
+    fun parseJsArrayType(jsArray: JSONArray, initValue:Map<String, JsArrayType>? = null): Map<String, JsArrayType> {
+        val filedMap = mutableMapOf<String,JsArrayType>().apply {
+            if(initValue != null){
+                putAll(initValue)
+            }
+        }
         var index = 0
+        var firstScan = true
         do {
+            val newKeyIsNull = initValue != null || firstScan.not()
             val obj = jsArray[index++] as JSONObject
+            //可以为空的字段
+            with(filedMap.keys.toMutableList()) {
+                removeAll(obj.keys.map { it.toString() })
+                forEach { canNullKey ->
+                    filedMap[canNullKey] = filedMap[canNullKey]!!.copy(isNull = true)
+                }
+            }
+
             obj.forEach { k, v ->
                 val oldType = filedMap[k]
                 when(v){
                     is JSONArray -> {
                         if (oldType == null && v.isEmpty()) {
-                            filedMap[k.toString()] = JsArrayType(Unit, false)
+                            filedMap[k.toString()] = JsArrayType(Unit, newKeyIsNull, isList = true)
                         } else if(v.isNotEmpty()) {
-                            filedMap[k.toString()] =
-                                oldType?.copy(type = parseJsArrayType(v)) ?: JsArrayType(
-                                    parseJsArrayType(v), false
-                                )
+                            when(val childV = v[0].also {
+                                if(it == null){
+                                    throw IllegalArgumentException("not support array first child is null")
+                                }
+                            }){
+                                is JSONObject -> {
+                                    filedMap[k.toString()] =
+                                        oldType?.copy(
+                                            type = parseJsArrayType(v, oldType.type as? Map<String, JsArrayType>),
+                                            isList = true,
+                                        ) ?: JsArrayType(
+                                            parseJsArrayType(v, null), isNull = newKeyIsNull,
+                                            isList = true,
+                                        )
+                                }
+                                is JSONArray -> {
+                                    throw IllegalArgumentException("not support array in array")
+                                }
+                                else -> {
+                                    filedMap[k.toString()] = oldType?.copy(type = childV!!.valueType, isList = true)?: JsArrayType(childV!!.valueType, newKeyIsNull, isList =  true)                                }
+                            }
+
                         }
+                    }
+                    is JSONObject -> {
+                        filedMap[k.toString()] = JsArrayType(parseJsArrayType(JSONArray().apply {
+                            add(v)
+                        }, initValue = oldType?.type as? Map<String, JsArrayType>), newKeyIsNull)
                     }
                     else -> {
                         if(oldType == null){
-                            filedMap[k.toString()] = JsArrayType(v?.valueType ?: Unit, v == null)
+                            filedMap[k.toString()] = JsArrayType(v?.valueType ?: Unit, newKeyIsNull || v == null)
                         }else{
                             if(v == null){
                                 filedMap[k.toString()] = oldType.copy(isNull = true)
@@ -110,18 +150,21 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
                                     if(oldValueType.groupId == valueType.groupId && oldValueType.ordinal < valueType.ordinal){
                                         //可以向上提升
                                         filedMap[k.toString()] = oldType.copy(type = valueType)
+                                    }else if(oldValueType.groupId != valueType.groupId){
+                                        throw IllegalArgumentException("not support type change")
                                     }
-                                }else{
+                                }else if(oldType.type is Unit){
                                     //直接替换类型
                                     filedMap[k.toString()] = oldType.copy(type = valueType)
+                                }else{
+                                    throw IllegalArgumentException("not support type change")
                                 }
                             }
                         }
                     }
                 }
-
-
             }
+            firstScan = false
         }while (unstableArray && index < jsArray.size )
         return filedMap
     }
