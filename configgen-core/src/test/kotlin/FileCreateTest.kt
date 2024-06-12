@@ -125,9 +125,10 @@ class FileCreateTest {
         assertThat(typeMap["user"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = false))
         assertThat(typeMap["longs"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = true))
 
-        ////            "user":$testArrayJson,
+        ////
         fileCreate = TestFileCreateInstance("com.location", "build/", """
             { 
+            "user":$testArrayJson,
             "like_list":[
                      {
                          "name":"tom",

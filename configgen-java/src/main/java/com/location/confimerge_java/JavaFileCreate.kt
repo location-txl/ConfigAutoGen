@@ -57,8 +57,6 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                    }.let {
                        if(value.isList) ParameterizedTypeName.get(ClassName.get(List::class.java), it) else it
                    }
-
-
                    addField(fieldSpec(key, typeName){
                        addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                    })
@@ -66,7 +64,6 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                    constructor.addStatement("this.${key} = $key")
                }
                addMethod(constructor.build())
-
            }
     }
 
