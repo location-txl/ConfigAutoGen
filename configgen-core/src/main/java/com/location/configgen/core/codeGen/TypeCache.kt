@@ -27,18 +27,20 @@ data class AA(
     val name: String,
     val users: List<User>
 )
-sealed class DataType(val canNull: Boolean, val isList: Boolean) {
-    class BasisType(val type: ValueType, canNull: Boolean, isList: Boolean) :
-        DataType(canNull, isList)
+sealed class DataType(val rawKey:String, val canNull: Boolean, val isList: Boolean) {
+    class BasisType(val type: ValueType, rawKey: String, canNull: Boolean, isList: Boolean) :
+        DataType(rawKey, canNull, isList)
 
     class ObjectType(
         val pkgName: String, //包名
         val className: String, //类名
+        val dataTypeMap: Map<String, DataType>, //字段名和类型的映射
+        rawKey: String,
         canNull: Boolean, isList: Boolean
     ) :
-        DataType(canNull, isList)
+        DataType(rawKey, canNull, isList)
 
-    class UnknownType(canNull: Boolean, isList: Boolean) : DataType(canNull, isList)
+    class UnknownType(rawKey:String, canNull: Boolean, isList: Boolean) : DataType(rawKey, canNull, isList)
 }
 
 data class Config(

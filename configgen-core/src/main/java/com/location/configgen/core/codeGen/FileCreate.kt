@@ -2,6 +2,7 @@ package com.location.configgen.core.codeGen
 
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
+import com.location.configgen.core.datanode.fieldName
 import com.location.configgen.core.datanode.nodeType
 import com.location.configgen.core.datanode.valueType
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
@@ -181,9 +182,9 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
      fun createPropertyClass(rootClass:T, classPrefix:String, innerPkgName: String,  typeMap:Map<String, JsArrayType>):Map<String, DataType>{
          val propertyMap = mutableMapOf<String, DataType>()
         typeMap.forEach { (k, v) ->
-            propertyMap[k] = when(v.type){
+            propertyMap[k.fieldName] = when(v.type){
                 is ValueType -> {
-                    DataType.BasisType(v.type, canNull = v.isNull, isList = v.isList)
+                    DataType.BasisType(v.type, k, canNull = v.isNull, isList = v.isList)
                 }
                 is Map<*,*> -> {
                     val innerClass = createDataTypeSpecBuilder(k.className, true)
@@ -197,13 +198,15 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
                     DataType.ObjectType(
                         pkgName = innerPkgName,
                         className = k.className,
+                        dataTypeMap = innerPropertyMap,
+                        k,
                         canNull = v.isNull,
                         isList = v.isList
                     )
                 }
                 is Unit -> {
                     //未知类型
-                    DataType.UnknownType(canNull = v.isNull, isList = v.isList)
+                    DataType.UnknownType(k, canNull = v.isNull, isList = v.isList)
                 }
                 else -> {
                     throw IllegalArgumentException("not support type:${v.type}")
@@ -232,6 +235,11 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
                 )
                 addProperty(innerClass, propertyMap)
                 typeSpecBuilder.addType(innerClass.build())
+                addLazyField(typeSpecBuilder, key, jsArray, innerClass, propertyMap, DataType.ObjectType(innerPkgName, key.className,
+                    dataTypeMap = propertyMap,
+                    key,
+                    canNull = false, isList = true))
+
 
 
 
@@ -255,6 +263,15 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
             }
         }
     }
+
+    abstract fun addLazyField(
+        typeSpecBuilder: T,
+        key: String,
+        jsArray: JSONArray,
+        objTypeSpec: T,
+        typeMap: Map<String, DataType>,
+        objType:DataType.ObjectType,
+    )
 
 
     private fun parseJsObjToType(obj:JSONObject){
