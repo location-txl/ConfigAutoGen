@@ -9,6 +9,7 @@ import com.location.configgen.core.datanode.fieldName
 import com.location.configgen.core.datanode.methodName
 import com.location.configgen.core.datanode.valueType
 import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.MethodSpec
@@ -71,7 +72,18 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                            addStatement("$fieldName = new \$T<>()", ArrayList::class.java)
                            jsArray.map { it as JSONObject }.forEach {
                                 addComment("value:$it")
-                                addStatement("$fieldName.add(new \$T(${createNewInstanceParam(it, typeMap, this)}))", ClassName.get(objType.pkgName, objType.className))
+//                                addStatement("$fieldName.add(new \$T(${createNewInstanceParam(it, typeMap, this)}))", ClassName.get(objType.pkgName, objType.className))
+                               val codeBlockBuilder = CodeBlock.builder()
+                               addStatement(
+                                   codeBlockBuilder
+                                       .add(
+                                           "$fieldName.add(new \$T(",
+                                           ClassName.get(objType.pkgName, objType.className)
+                                       )
+                                       .add(createNewInstanceParam(it, typeMap, this))
+                                       .add(")")
+                                       .build()
+                               )
                            }
                        }
                    }
@@ -81,8 +93,8 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
        }
     }
 
-    private fun createNewInstanceParam(jsObj: JSONObject, typeMap: Map<String, DataType>, methodSpecBuilder: MethodSpec.Builder): String {
-        val builder = StringBuilder()
+    private fun createNewInstanceParam(jsObj: JSONObject, typeMap: Map<String, DataType>, methodSpecBuilder: MethodSpec.Builder): CodeBlock {
+        val codeBlockList = mutableListOf<CodeBlock>()
         typeMap.forEach { (k, v) ->
 //            if(v.isList){
 //                methodSpecBuilder.addStatement("\$T ${k}${Random.nextInt(1000)}List = new \$T<>()", v., ArrayList::class.java)
@@ -107,7 +119,7 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
 
 
         }
-        return builder.toString().removeSuffix(",")
+        return CodeBlock.join()
     }
 
     override fun addProperty(typeSpecBuilder: JavaTypeSpec, propertyMap: Map<String, DataType>) {
