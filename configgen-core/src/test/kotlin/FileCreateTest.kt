@@ -1,10 +1,13 @@
 import com.google.common.truth.Truth.assertThat
 import com.location.configgen.core.codeGen.JsArrayType
+import com.location.configgen.core.codeGen.className
 import com.location.configgen.core.datanode.ValueType
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder
 import org.json.simple.JSONArray
 import org.json.simple.parser.JSONParser
+import org.junit.Before
 import org.junit.Test
+import java.io.File
 
 /**
  *
@@ -14,12 +17,8 @@ import org.junit.Test
  */
 class FileCreateTest {
 
-    @Test
-    fun parseArrayTest(){
-        println("parseArrayTest")
-        val fileCreate = TestFileCreateInstance("", "", "", "", unstableArray = true)
-        val json = """
-                    [
+    val testArrayJson = """
+        [
                         {
                             "age_str":null,
                             "name":"tom",
@@ -71,7 +70,19 @@ class FileCreateTest {
                             "longs":[]
                         }
                     ]
-        """.trimIndent()
+    """.trimIndent()
+
+
+    @Before
+    fun start(){
+        init()
+    }
+
+    @Test
+    fun parseArrayTest(){
+        println("parseArrayTest")
+        var fileCreate = TestFileCreateInstance("", "", "", "")
+        val json = testArrayJson
         val jsArray =  JSONParser().parse(json) as JSONArray
         val typeMap = fileCreate.parseJsArrayType(jsArray)
 
@@ -114,8 +125,27 @@ class FileCreateTest {
         assertThat(typeMap["user"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = false))
         assertThat(typeMap["longs"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = true))
 
-
-//        assert()
+        ////            "user":$testArrayJson,
+        fileCreate = TestFileCreateInstance("com.location", "build/", """
+            { 
+            "like_list":[
+                     {
+                         "name":"tom",
+                         "l_config":{
+                             "id":1
+                         }
+                     }
+                     ,
+                      {
+                          "name":"tom",
+                          "l_config":{
+                              "id":1
+                          }
+                      }
+                ]
+            }
+        """.trimIndent(), "UserManager")
+        fileCreate.create()
 
     }
 }

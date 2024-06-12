@@ -1,5 +1,6 @@
 package com.location.confimerge_java
 
+import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.FileCreate
 import com.location.configgen.core.codeGen.methodSpec
 import com.location.configgen.core.datanode.ValueType
@@ -9,9 +10,11 @@ import com.location.configgen.core.datanode.valueType
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
+import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
+import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import org.json.simple.JSONArray
 import java.io.File
 import javax.lang.model.element.Modifier
@@ -24,18 +27,52 @@ import javax.lang.model.element.Modifier
  */
 class JavaFileCreate(packageName: String, outputDir: String, json: String, className: String) :
     FileCreate<JavaTypeSpec>(packageName, outputDir, json, className) {
+        companion object{
+            @VisibleForTesting var inTest = false
+        }
     override fun writeFile(fileComment: String, classSpec: JavaTypeSpec) {
         val typeSpec = classSpec.build()
         val javaFile = JavaFile.builder(packageName, typeSpec as TypeSpec)
             .addFileComment(fileComment)
             .build()
         javaFile.writeTo(File(outputDir))
+
+        if(inTest){
+            javaFile.writeTo(System.out)
+        }
     }
 
     override fun createTypeSpecBuilder(className: String, isInner:Boolean): JavaTypeSpec = JavaTypeSpec(className, isInner)
+    override fun createDataTypeSpecBuilder(className: String, isInner: Boolean): JavaTypeSpec  = createTypeSpecBuilder(className, isInner)
+    override fun addProperty(typeSpecBuilder: JavaTypeSpec, propertyMap: Map<String, DataType>) {
+           with(typeSpecBuilder.classType){
+               val constructor = MethodSpec.constructorBuilder().apply {
+                   addModifiers(Modifier.PUBLIC)
+               }
+               propertyMap.forEach { (key, value) ->
+                   val typeName:TypeName  = when(value){
+                          is DataType.BasisType -> value.type.typeName(box = value.isList || value.canNull)
+                          is DataType.ObjectType -> ClassName.get(value.pkgName, value.className)
+                            is DataType.UnknownType -> ClassName.get(Object::class.java)
+                   }.let {
+                       if(value.isList) ParameterizedTypeName.get(ClassName.get(List::class.java), it) else it
+                   }
 
-    private fun Any.typeName(box:Boolean = false): TypeName {
-        val typeName = when(valueType){
+
+                   addField(fieldSpec(key, typeName){
+                       addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                   })
+                   constructor.addParameter(typeName, key)
+                   constructor.addStatement("this.${key} = $key")
+               }
+               addMethod(constructor.build())
+
+           }
+    }
+
+
+    private fun ValueType.typeName(box:Boolean = false): TypeName {
+        val typeName = when(this){
             ValueType.STRING ->  ClassName.get(String::class.java)
             ValueType.INT ->  TypeName.INT
             ValueType.BOOLEAN ->  TypeName.BOOLEAN
@@ -54,7 +91,7 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
             name = key.fieldName,
             type = ParameterizedTypeName.get(
                 ClassName.get(List::class.java),
-                jsArray[0]!!.typeName(box = true)
+                jsArray[0]!!.valueType.typeName(box = true)
             ),
         ) {
             addJavadoc("key:$key - value:$jsArray")

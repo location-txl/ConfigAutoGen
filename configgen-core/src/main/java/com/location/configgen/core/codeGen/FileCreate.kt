@@ -4,7 +4,6 @@ import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.core.datanode.nodeType
 import com.location.configgen.core.datanode.valueType
-import groovy.transform.VisibilityOptions
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -52,6 +51,13 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
     abstract fun createTypeSpecBuilder(className: String, isInner:Boolean): T
 
 
+    abstract fun createDataTypeSpecBuilder(className: String, isInner:Boolean): T
+
+
+
+
+
+
     private fun parseJsonObj(typeSpecBuilder: T, jsObj: JSONObject){
 
         jsObj.forEach { k, v ->
@@ -79,6 +85,8 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
             }
         }
     }
+
+    protected abstract fun addProperty(typeSpecBuilder: T, propertyMap:Map<String, DataType>)
 
 
     @VisibleForTesting
@@ -169,12 +177,64 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
         return filedMap
     }
 
+    @VisibleForTesting
+     fun createPropertyClass(rootClass:T, classPrefix:String, innerPkgName: String,  typeMap:Map<String, JsArrayType>):Map<String, DataType>{
+         val propertyMap = mutableMapOf<String, DataType>()
+        typeMap.forEach { (k, v) ->
+            propertyMap[k] = when(v.type){
+                is ValueType -> {
+                    DataType.BasisType(v.type, canNull = v.isNull, isList = v.isList)
+                }
+                is Map<*,*> -> {
+                    val innerClass = createDataTypeSpecBuilder(k.className, true)
+                    innerClass.addJavaDoc("key:$k - value:$v")
+                    val className = k.className
+                    val nextPkgName = "$innerPkgName.${className}"
+                    val innerPropertyMap = createPropertyClass(innerClass, "$classPrefix.${className}",
+                        nextPkgName, v.type as Map<String, JsArrayType>)
+                    addProperty(innerClass, innerPropertyMap)
+                    rootClass.addType(innerClass.build())
+                    DataType.ObjectType(
+                        pkgName = innerPkgName,
+                        className = k.className,
+                        canNull = v.isNull,
+                        isList = v.isList
+                    )
+                }
+                is Unit -> {
+                    //未知类型
+                    DataType.UnknownType(canNull = v.isNull, isList = v.isList)
+                }
+                else -> {
+                    throw IllegalArgumentException("not support type:${v.type}")
+                }
+            }
+
+
+        }
+
+      return propertyMap
+    }
     private fun parseJsonArray(typeSpecBuilder: T, key:String, jsArray:JSONArray, innerPkgName:String){
+
         when(jsArray[0]){
             is JSONObject -> {
-                parseJsArrayType(jsArray).also {
+                val typeMap = parseJsArrayType(jsArray).also {
                     println("parseJsonArray obj:$it")
                 }
+                val innerClass = createDataTypeSpecBuilder(key.className, true)
+                innerClass.addJavaDoc("key:$key - value:$jsArray")
+                val propertyMap = createPropertyClass(
+                    innerClass,
+                    key.className,
+                    innerPkgName + "." + key.className,
+                    typeMap
+                )
+                addProperty(innerClass, propertyMap)
+                typeSpecBuilder.addType(innerClass.build())
+
+
+
 //                val typeObject = if(unstableArray){
 //
 //                }else{

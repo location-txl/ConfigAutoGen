@@ -32,7 +32,7 @@ private val currentTime:String
  * time：2023/7/19 14:54
  * description：
  */
-class JavaFileCreate(
+class JavaFileCreateA(
     private  val packageName:String,
     private val outputDir: String,
     private val json: String,

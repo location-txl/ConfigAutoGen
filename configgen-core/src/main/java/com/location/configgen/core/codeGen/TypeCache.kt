@@ -1,5 +1,6 @@
 package com.location.configgen.core.codeGen
 
+import com.location.configgen.core.datanode.ValueType
 import org.json.simple.JSONArray
 
 /**
@@ -26,6 +27,19 @@ data class AA(
     val name: String,
     val users: List<User>
 )
+sealed class DataType(val canNull: Boolean, val isList: Boolean) {
+    class BasisType(val type: ValueType, canNull: Boolean, isList: Boolean) :
+        DataType(canNull, isList)
+
+    class ObjectType(
+        val pkgName: String, //包名
+        val className: String, //类名
+        canNull: Boolean, isList: Boolean
+    ) :
+        DataType(canNull, isList)
+
+    class UnknownType(canNull: Boolean, isList: Boolean) : DataType(canNull, isList)
+}
 
 data class Config(
     val develop: Boolean,
