@@ -81,7 +81,7 @@ class FileCreateTest {
     @Test
     fun parseArrayTest(){
         println("parseArrayTest")
-        var fileCreate = TestFileCreateInstance("", "", "", "")
+        val fileCreate = TestFileCreateInstance("", "", "", "")
         val json = testArrayJson
         val jsArray =  JSONParser().parse(json) as JSONArray
         val typeMap = fileCreate.parseJsArrayType(jsArray)
@@ -125,27 +125,49 @@ class FileCreateTest {
         assertThat(typeMap["user"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = false))
         assertThat(typeMap["longs"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = true))
 
-        //             "user":$testArrayJson,
-        fileCreate = TestFileCreateInstance("com.location", "build/", """
+    }
+
+
+    @Test
+    fun testCodeGenerate(){
+        //
+        val fileCreate = TestFileCreateInstance("com.location", "build/", """
             { 
+            "uu":${testArrayJson},
             "like_list":[
                      {
+                         "ids":[1,2,3,4,5],
                          "name":"tom",
+                         "id":1,
+                         "float_test":12.0,
+                         "time":1718271131975,
+                         "double_test":3.4028235E38,
                          "l_config":{
-                             "id":1
+                             "id":1,
+                             "user":{
+                                "id":1
+                             }
                          }
                      }
                      ,
                       {
-                          "name":"tom",
                           "l_config":{
                               "id":2
-                          }
-                      }
-                ]
+                          },
+                          "name":null
+                      },
+                      {
+                         "ids":[],
+                      },
+                      {
+                      
+                      },
+                      null
+                ],
+                "null_list":null
             }
         """.trimIndent(), "UserManager")
         fileCreate.create()
-
+        println(Float.MAX_VALUE)
     }
 }

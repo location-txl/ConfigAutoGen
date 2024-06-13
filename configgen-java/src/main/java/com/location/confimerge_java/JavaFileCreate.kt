@@ -2,7 +2,6 @@ package com.location.confimerge_java
 
 import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.FileCreate
-import com.location.configgen.core.codeGen.JsArrayType
 import com.location.configgen.core.codeGen.methodSpec
 import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.core.datanode.fieldName
@@ -60,7 +59,7 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
            val fieldName = key.fieldName
            val fieldType = ParameterizedTypeName.get(ClassName.get(List::class.java), ClassName.get(objType.pkgName, objType.className))
            addField(fieldSpec(fieldName, fieldType){
-               addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+               addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.VOLATILE)
                initializer("null")
            })
            addMethod(methodSpec(key.methodName){
@@ -70,9 +69,9 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                    controlFlow("synchronized(${className}.class)"){
                        controlFlow("if($fieldName == null)"){
                            addStatement("$fieldName = new \$T<>()", ArrayList::class.java)
-                           jsArray.map { it as JSONObject }.forEach {
+                           jsArray.mapNotNull { it as? JSONObject }.forEach {
                                 addComment("value:$it")
-//                                addStatement("$fieldName.add(new \$T(${createNewInstanceParam(it, typeMap, this)}))", ClassName.get(objType.pkgName, objType.className))
+
                                val codeBlockBuilder = CodeBlock.builder()
                                addStatement(
                                    codeBlockBuilder
@@ -81,46 +80,122 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                                            ClassName.get(objType.pkgName, objType.className)
                                        )
                                        .add(createNewInstanceParam(it, typeMap, this))
-                                       .add(")")
+                                       .add("))")
                                        .build()
                                )
                            }
                        }
                    }
                }
+               addStatement("return $fieldName")
 
            })
        }
     }
 
-    private fun createNewInstanceParam(jsObj: JSONObject, typeMap: Map<String, DataType>, methodSpecBuilder: MethodSpec.Builder): CodeBlock {
-        val codeBlockList = mutableListOf<CodeBlock>()
-        typeMap.forEach { (k, v) ->
-//            if(v.isList){
-//                methodSpecBuilder.addStatement("\$T ${k}${Random.nextInt(1000)}List = new \$T<>()", v., ArrayList::class.java)
-//            }else{
-//
-//            }
-            when(v){
-                is DataType.ObjectType -> {
-                    builder.append("new \$T(${createNewInstanceParam(jsObj[v.rawKey] as JSONObject, v.dataTypeMap, methodSpecBuilder)}),")
-                }
-                is DataType.BasisType -> {
 
-                    when(v.type){
-                        ValueType.STRING -> builder.append("\"${jsObj[v.rawKey]}\",")
-                        ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> builder.append("${jsObj[v.rawKey]},")
-                        ValueType.LONG -> builder.append("${jsObj[v.rawKey]}L,")
-                        ValueType.FLOAT -> builder.append("${jsObj[v.rawKey]}f,")
+    private fun getDataTypeTypeName(dataType: DataType) = when(dataType){
+        is DataType.ObjectType -> ClassName.get(dataType.pkgName, dataType.className)
+        is DataType.BasisType -> dataType.type.typeName(box = true)
+        is DataType.UnknownType -> ClassName.get(Object::class.java)
+    }
+
+    private fun getDataTypeDefValue(dataType: DataType) = if(dataType.isList){
+        "null"
+    }else{
+        when(dataType){
+            is DataType.ObjectType -> "null"
+            is DataType.BasisType -> when(dataType.type){
+                ValueType.STRING -> "null"
+                ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> "0"
+                ValueType.LONG -> "0L"
+                ValueType.FLOAT -> "0f"
+            }
+            is DataType.UnknownType -> "null"
+        }
+    }
+
+    private fun createNewInstanceParam(
+        jsObj: JSONObject,
+        typeMap: Map<String, DataType>,
+        methodSpecBuilder: MethodSpec.Builder
+    ): CodeBlock {
+        fun createParam(
+            dataType: DataType,
+            value: Any,
+            methodSpecBuilder: MethodSpec.Builder
+        ): CodeBlock {
+            return when (dataType) {
+                is DataType.ObjectType -> {
+                    CodeBlock.builder()
+                        .add("new \$T(", ClassName.get(dataType.pkgName, dataType.className)).add(
+                            createNewInstanceParam(
+                                value as JSONObject, dataType.dataTypeMap, methodSpecBuilder
+                            )
+                        ).add(")").build()
+                }
+
+                is DataType.BasisType -> {
+                    when (dataType.type) {
+                        ValueType.STRING -> CodeBlock.of(
+                            "\$S", value
+                        )
+
+
+                        ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> CodeBlock.of("\$L", value)
+
+                        ValueType.LONG -> CodeBlock.of(
+                            "\$L", "${value}L"
+                        )
+
+                        ValueType.FLOAT -> CodeBlock.of(
+                            "\$L", "${value}f"
+                        )
+
                     }
                 }
-                is DataType.UnknownType -> builder.append("null,")
+
+                is DataType.UnknownType -> CodeBlock.of("null")
+            }
+        }
+        val codeBlockList = mutableListOf<CodeBlock>()
+        typeMap.forEach { (k, dataType) ->
+            val value = jsObj[dataType.rawKey]
+            if (value == null && dataType.canNull.not()) {
+                error("$json in ${dataType.rawKey} is null, but canNull is false, please submit issue to fix it https://github.com/TLocation/ConfigAutoGen/issues")
+            } else if (value == null) {
+                codeBlockList.add(CodeBlock.of(getDataTypeDefValue(dataType)))
+                return@forEach
             }
 
 
+            codeBlockList.add(if (dataType.isList) {
+                val tmpFieldName = "${k}List_${Random.nextInt(1000)}"
+                methodSpecBuilder.addStatement(
+                    "\$T $tmpFieldName = new \$T<>()", ParameterizedTypeName.get(
+                        ClassName.get(List::class.java),
+                        getDataTypeTypeName(dataType)
+                    ), ArrayList::class.java
+                )
+                val childArray = value as? JSONArray
+                    ?: error("k:${dataType.rawKey} value is not JSONArray")
+
+                childArray.filterNotNull().forEach { childItem ->
+                    val builder = CodeBlock.builder()
+                    builder.add("$tmpFieldName.add(")
+                    builder.add(createParam(dataType, childItem, methodSpecBuilder))
+                    builder.add(")")
+                    methodSpecBuilder.addStatement(builder.build())
+                }
+                CodeBlock.of(tmpFieldName)
+            } else {
+                createParam(dataType, value, methodSpecBuilder)
+            })
         }
-        return CodeBlock.join()
+        return CodeBlock.join(codeBlockList, ", ")
     }
+
+
 
     override fun addProperty(typeSpecBuilder: JavaTypeSpec, propertyMap: Map<String, DataType>) {
            with(typeSpecBuilder.classType){
@@ -129,7 +204,7 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
                }
                propertyMap.forEach { (key, value) ->
                    val typeName:TypeName  = when(value){
-                          is DataType.BasisType -> value.type.typeName(box = value.isList || value.canNull)
+                          is DataType.BasisType -> value.type.typeName(box = value.isList)
                           is DataType.ObjectType -> ClassName.get(value.pkgName, value.className)
                             is DataType.UnknownType -> ClassName.get(Object::class.java)
                    }.let {
@@ -233,6 +308,19 @@ class JavaFileCreate(packageName: String, outputDir: String, json: String, class
             ValueType.FLOAT -> fieldSpec.initializer("\$Lf", v)
             ValueType.DOUBLE -> fieldSpec.initializer("\$Ld", v)
         }
+        typeSpecBuilder.classType.addField(fieldSpec.build())
+    }
+
+    override fun addStaticUnknownFiled(typeSpecBuilder: JavaTypeSpec, key: String) {
+        val fieldSpec = FieldSpec.builder(
+            ClassName.get(Object::class.java),
+            key.fieldName,
+            Modifier.PUBLIC,
+            Modifier.STATIC,
+            Modifier.FINAL
+        )
+            .addJavadoc("key:$key value:null")
+            .initializer("null")
         typeSpecBuilder.classType.addField(fieldSpec.build())
     }
 }

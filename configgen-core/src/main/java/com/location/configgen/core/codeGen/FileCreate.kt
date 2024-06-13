@@ -78,14 +78,18 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
                         println("$k is empty array")
                     }
                 }
-
                 else -> {
-                    addStaticFiled(typeSpecBuilder, k.toString(), v)
+                    if(v == null){
+                        addStaticUnknownFiled(typeSpecBuilder, k.toString())
+                    }else{
+                        addStaticFiled(typeSpecBuilder, k.toString(), v)
+                    }
                 }
 
             }
         }
     }
+
 
     protected abstract fun addProperty(typeSpecBuilder: T, propertyMap:Map<String, DataType>)
 
@@ -101,7 +105,8 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
         var firstScan = true
         do {
             val newKeyIsNull = initValue != null || firstScan.not()
-            val obj = jsArray[index++] as JSONObject
+
+            val obj = jsArray[index++] as? JSONObject ?: continue
             //可以为空的字段
             with(filedMap.keys.toMutableList()) {
                 removeAll(obj.keys.map { it.toString() })
@@ -321,6 +326,7 @@ abstract class FileCreate<T : TypeSpecBuilderWrapper>(
         }
 
     abstract fun addStaticFiled(typeSpecBuilder: T, key: String, v: Any)
+    abstract fun addStaticUnknownFiled(typeSpecBuilder: T, key: String)
 
 }
 
