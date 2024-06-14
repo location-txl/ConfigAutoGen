@@ -1,4 +1,4 @@
-import com.location.confimerge_java.JavaFileCreate
+import com.location.confimerge_java.JavaClassGenerate
 
 /**
  *
@@ -7,8 +7,8 @@ import com.location.confimerge_java.JavaFileCreate
  * description：
  */
 fun init(){
-    JavaFileCreate.inTest = true
+    JavaClassGenerate.inTest = true
 }
 
-typealias TestFileCreateInstance = JavaFileCreate
+typealias TestFileCreateInstance = JavaClassGenerate
 

@@ -1,6 +1,6 @@
 package com.location.confimerge_java
 
-import com.location.configgen.core.codeGen.TypeSpecBuilderWrapper
+import com.location.configgen.core.codeGen.ClassSpec
 import com.squareup.javapoet.TypeSpec
 import javax.lang.model.element.Modifier
 
@@ -10,20 +10,21 @@ import javax.lang.model.element.Modifier
  * time：2024/6/11 16:00
  * description：
  */
-class JavaTypeSpec(className: String, isInner:Boolean) : TypeSpecBuilderWrapper(className, isInner) {
+class JavaClassSpec(className: String, isInner: Boolean) :
+    ClassSpec<JavaClassSpec>(className, isInner) {
     val classType: TypeSpec.Builder = TypeSpec.classBuilder(className).apply {
         addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        if(isInner){
+        if (isInner) {
             addModifiers(Modifier.STATIC)
         }
     }
 
-    override fun addJavaDoc(doc: String) {
+    override fun addDoc(doc: String) {
         classType.addJavadoc(doc)
     }
 
-    override fun addType(typeSpec: Any) {
-        classType.addType(typeSpec as TypeSpec)
+    override fun addInnerClass(classSpec: JavaClassSpec) {
+        classType.addType(classSpec.classType.build())
     }
 
     override fun build(): Any = classType.build()

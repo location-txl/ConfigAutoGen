@@ -27,10 +27,8 @@ sourceSets {
 
 
 
-dependencies{
-    implementation(libs.json.simple)
-    implementation(libs.agp.api)
-    implementation(libs.agp.tool)
+dependencies {
+    implementation(libs.bundles.codeGenCore)
     implementation(libs.poet.java)
     implementation(libs.poet.kotlin)
     testImplementation(libs.junit)
@@ -59,7 +57,7 @@ tasks.register("publishJavadocsJar", Jar::class) {
 }
 
 afterEvaluate {
-    publishing{
+    publishing {
         publications {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])

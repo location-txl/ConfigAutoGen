@@ -1,5 +1,6 @@
 package com.location.configgen.core.config
 
+import com.location.configgen.core.codeGen.className
 import java.io.File
 
 /**
@@ -47,16 +48,7 @@ data class JsonData(
     val jsonStr:String
 )
 
-val String.className
-    get() = if(this.contains("_")){
-        this.split("_").joinToString("") {
-            it.replaceFirstChar { firstChar ->
-                if (firstChar.isLowerCase()) firstChar.uppercase() else firstChar.toString()
-            }
-        }
-    }else{
-        this.replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
-    }
+
 
 
 

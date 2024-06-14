@@ -3,7 +3,7 @@ package com.location.configgen.core
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
 import com.location.configgen.core.config.readJsonFile
-import com.location.confimerge_java.JavaFileCreate
+import com.location.confimerge_java.JavaClassGenerate
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -51,7 +51,7 @@ abstract class ConfigGenTask:DefaultTask() {
         println("outputDir = ${outputDir.get().asFile.absolutePath}")
         val configSourceList = mergeFiles()
         configSourceList.forEach {
-            JavaFileCreate(
+            JavaClassGenerate(
                 packageName, outputDir.asFile.get().absolutePath, it.json, it.configHeader.className
             ).create()
         }

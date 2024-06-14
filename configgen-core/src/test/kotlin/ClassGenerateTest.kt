@@ -1,11 +1,11 @@
 import com.google.common.truth.Truth.assertThat
 import com.location.configgen.core.codeGen.JsArrayType
-import com.location.configgen.core.codeGen.className
 import com.location.configgen.core.datanode.ValueType
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder
 import org.json.simple.JSONArray
 import org.json.simple.parser.JSONParser
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 
@@ -15,7 +15,22 @@ import java.io.File
  * time：2024/6/12 14:03
  * description：
  */
-class FileCreateTest {
+class ClassGenerateTest {
+    companion object{
+        private const val FILE_GENERATE_PATH = "build/testCodeGenerate"
+
+        @JvmStatic
+        @BeforeClass
+        fun init(){
+            val file = File(FILE_GENERATE_PATH)
+            if(file.exists()){
+                file.deleteRecursively()
+            }
+            file.mkdirs()
+        }
+    }
+
+
 
     val testArrayJson = """
         [
@@ -90,40 +105,76 @@ class FileCreateTest {
             .setPrettyPrinting()
             .create().toJson(typeMap)
         println(jsObject.toString())
-        assertThat(typeMap["age_str"]).isEqualTo(JsArrayType(ValueType.STRING, isNull = true, isList = false))
-        assertThat(typeMap["name"]).isEqualTo(JsArrayType(ValueType.STRING, isNull = true, isList = false))
-        assertThat(typeMap["age"]).isEqualTo(JsArrayType(ValueType.INT, isNull = false, isList = false))
-        assertThat(typeMap["time"]).isEqualTo(JsArrayType(ValueType.LONG, isNull = true, isList = false))
-        assertThat(typeMap["language"]).isEqualTo(JsArrayType(ValueType.STRING, isNull = true, isList = true))
+        assertThat(typeMap["age_str"]).isEqualTo(
+            JsArrayType(
+                ValueType.STRING,
+                canNull = true,
+                isList = false
+            )
+        )
+        assertThat(typeMap["name"]).isEqualTo(
+            JsArrayType(
+                ValueType.STRING,
+                canNull = true,
+                isList = false
+            )
+        )
+        assertThat(typeMap["age"]).isEqualTo(
+            JsArrayType(
+                ValueType.INT,
+                canNull = false,
+                isList = false
+            )
+        )
+        assertThat(typeMap["time"]).isEqualTo(
+            JsArrayType(
+                ValueType.LONG,
+                canNull = true,
+                isList = false
+            )
+        )
+        assertThat(typeMap["language"]).isEqualTo(
+            JsArrayType(
+                ValueType.STRING,
+                canNull = true,
+                isList = true
+            )
+        )
         assertThat(typeMap["config"]).isEqualTo(JsArrayType(mapOf(
             "id" to JsArrayType(
             type = ValueType.INT,
-            isNull = true,
+                canNull = true,
             isList =  false,
 
                  ),
             "level" to JsArrayType(
                 type = ValueType.INT,
-                isNull = true,
+                canNull = true,
                 isList = false,
             )
         ),
-            isNull = true,
+            canNull = true,
             isList = false))
         assertThat(typeMap["ids"]).isEqualTo(
             JsArrayType(
                 mapOf(
-                    "u_id" to JsArrayType(ValueType.FLOAT, isNull = true, isList = false),
-                    "id" to JsArrayType(ValueType.INT, isNull = false, isList = false),
-                    "id_str" to JsArrayType(ValueType.STRING, isNull = true, isList = false),
+                    "u_id" to JsArrayType(ValueType.FLOAT, canNull = true, isList = false),
+                    "id" to JsArrayType(ValueType.INT, canNull = false, isList = false),
+                    "id_str" to JsArrayType(ValueType.STRING, canNull = true, isList = false),
                 ),
-                isNull = true,
+                canNull = true,
                 isList = true,
             )
         )
-        assertThat(typeMap["ints"]).isEqualTo(JsArrayType(ValueType.INT, isNull = true, isList = true))
-        assertThat(typeMap["user"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = false))
-        assertThat(typeMap["longs"]).isEqualTo(JsArrayType(Unit, isNull = true, isList = true))
+        assertThat(typeMap["ints"]).isEqualTo(
+            JsArrayType(
+                ValueType.INT,
+                canNull = true,
+                isList = true
+            )
+        )
+        assertThat(typeMap["user"]).isEqualTo(JsArrayType(Unit, canNull = true, isList = false))
+        assertThat(typeMap["longs"]).isEqualTo(JsArrayType(Unit, canNull = true, isList = true))
 
     }
 
@@ -131,7 +182,7 @@ class FileCreateTest {
     @Test
     fun testCodeGenerate(){
         //
-        val fileCreate = TestFileCreateInstance("com.location", "build/", """
+        val fileCreate = TestFileCreateInstance("com.location", FILE_GENERATE_PATH, """
             { 
             "uu":${testArrayJson},
             "like_list":[
@@ -164,10 +215,11 @@ class FileCreateTest {
                       },
                       null
                 ],
-                "null_list":null
+                "null_list":null,
+                "test_empty_list":[],
+                "test_no_empty_list":[1,2,3,4,5,6,7,8],
             }
         """.trimIndent(), "UserManager")
         fileCreate.create()
-        println(Float.MAX_VALUE)
     }
 }

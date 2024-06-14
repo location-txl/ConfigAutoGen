@@ -15,37 +15,26 @@ import com.squareup.kotlinpoet.TypeSpec
  */
 fun main() {
     val className = "Person"
-    val nameProperty = PropertySpec.builder("name", String::class)
-        .initializer("name")
-        .build()
-    val ageProperty = PropertySpec.builder("age", Int::class)
-        .initializer("age")
-        .build()
-    val personClass = TypeSpec.classBuilder(className)
-        .addModifiers(KModifier.DATA)
-        .addProperty(nameProperty)
-        .addProperty(ageProperty)
-        .primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameter("name", String::class)
-                .addParameter( ParameterSpec.builder("age", Int::class)
-                    .defaultValue("%L", 0)
-                    .build())
+    val nameProperty = PropertySpec.builder("name", String::class).initializer("name").build()
+    val ageProperty = PropertySpec.builder("age", Int::class).initializer("age").build()
+    val personClass =
+        TypeSpec.classBuilder(className).addModifiers(KModifier.DATA).addProperty(nameProperty)
+            .addProperty(ageProperty).primaryConstructor(
+                FunSpec.constructorBuilder().addParameter("name", String::class).addParameter(
+                    ParameterSpec.builder("age", Int::class).defaultValue("%L", 0).build()
+                )
 
 
-                .build()
-        )
-        .build()
+                    .build()
+            ).build()
 
-    val file = FileSpec.builder("com.example", className)
-        .addType(personClass)
-        .build()
+    val file = FileSpec.builder("com.example", className).addType(personClass).build()
 
 
     file.writeTo(System.out)
 
 
-    val map = mutableMapOf<Int,Int>()
+    val map = mutableMapOf<Int, Int>()
     map[1] = 1
     map[2] = 2
     map[2] = 2

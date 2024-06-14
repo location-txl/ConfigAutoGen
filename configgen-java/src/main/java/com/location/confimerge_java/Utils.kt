@@ -1,8 +1,11 @@
 package com.location.confimerge_java
 
+import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.MethodSpec
+import com.squareup.javapoet.ParameterSpec
 import com.squareup.javapoet.TypeName
+import com.squareup.javapoet.TypeSpec
 
 /**
  *
@@ -30,3 +33,23 @@ inline fun MethodSpec.Builder.controlFlow(
     }
 
 }
+
+fun classSpec(
+    name: ClassName,
+    body: TypeSpec.Builder.() -> Unit = {}
+): TypeSpec = TypeSpec.classBuilder(name).apply(body).build()
+
+fun constructorSpec(
+    body: MethodSpec.Builder.() -> Unit = {}
+): MethodSpec = MethodSpec.constructorBuilder().apply(body).build()
+
+fun methodSpec(
+    name: String,
+    body: MethodSpec.Builder.() -> Unit = {}
+): MethodSpec = MethodSpec.methodBuilder(name).apply(body).build()
+
+fun parameterSpec(
+    type: TypeName,
+    name: String,
+    body: ParameterSpec.Builder.() -> Unit = {}
+): ParameterSpec = ParameterSpec.builder(type, name).apply(body).build()

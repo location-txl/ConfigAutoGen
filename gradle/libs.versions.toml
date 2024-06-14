@@ -28,9 +28,13 @@ poet-kotlin = { group = "com.squareup", name = "kotlinpoet", version.ref = "poet
 agp-api = { group = "com.android.tools.build", name = "gradle-api", version.ref = "agp" }
 agp-tool = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 truth = "com.google.truth:truth:1.4.2"
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org-jetbrains-kotlin-jvm" }
 config-merge = { id = "com.location.configGen-java", version = "1.0.1" }
+
+[bundles]
+codeGenCore = ["json-simple", "agp-api", "agp-tool"]
 
