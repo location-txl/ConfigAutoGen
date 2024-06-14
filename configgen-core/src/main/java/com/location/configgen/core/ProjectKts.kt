@@ -10,4 +10,4 @@ import java.io.File
  * description：
  */
 val Project.configMergeJavaSourceDir
-    get() = "${buildDir.absolutePath}${File.separator}generated${File.separator}source${File.separator}configMerge${File.separator}"
+    get() = "${layout.buildDirectory.asFile.get().absolutePath}${File.separator}generated${File.separator}source${File.separator}configMerge${File.separator}"

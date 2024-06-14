@@ -14,7 +14,7 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
-import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.VisibleForTesting
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import java.io.File

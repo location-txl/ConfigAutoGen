@@ -2,7 +2,7 @@ package com.location.configgen.core.codeGen
 
 import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.core.datanode.valueType
-import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.VisibleForTesting
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
