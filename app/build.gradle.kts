@@ -2,8 +2,9 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.config.merge)
 }
+//apply(plugin = "configgen.java")
+apply(plugin = "configgen.kotlin")
 
 android {
     namespace = "com.location.configgen"
@@ -61,7 +62,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)

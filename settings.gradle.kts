@@ -1,9 +1,6 @@
-import java.net.URI
-
-
-
-//include(":configgen-java")
-include(":configgen-kotlin")
+include(":config-core")
+include(":config-java")
+include(":config-kotlin")
 
 
 pluginManagement {
@@ -27,6 +24,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ConfigAutoGen"
+rootProject.name = "ConfigWeaver"
 include(":app")
-//include(":configgen-core")
