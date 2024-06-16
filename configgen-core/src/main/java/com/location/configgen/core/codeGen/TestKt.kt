@@ -28,26 +28,15 @@ fun main() {
                     .build()
             ).build()
 
-    val file = FileSpec.builder("com.example", className).addType(personClass).build()
+    val file = FileSpec.builder("com.example", className)
+        .addType(personClass)
+        .addType(TypeSpec.objectBuilder("aa").build())
+        .build()
 
 
     file.writeTo(System.out)
 
 
-    val map = mutableMapOf<Int, Int>()
-    map[1] = 1
-    map[2] = 2
-    map[2] = 2
-
-    val map2 = mutableMapOf<Int, Int>()
-
-    map2[2] = 2
-    map2[1] = 1
-    map2[6] = 1
-
-    println(map == map2)
-    println(map.hashCode())
-    println(map2.hashCode())
 
 }
 

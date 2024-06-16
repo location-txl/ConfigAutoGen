@@ -217,7 +217,23 @@ class ClassGenerateTest {
                 ],
                 "null_list":null,
                 "test_empty_list":[],
+                 "ids": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10"
+  ],
                 "test_no_empty_list":[1,2,3,4,5,6,7,8],
+                "id":1,
+                "id_str":"1",
+                "id_float":1.2,
+                "id_boolean":true
             }
         """.trimIndent(), "UserManager")
         fileCreate.create()

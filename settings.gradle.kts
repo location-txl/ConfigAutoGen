@@ -2,7 +2,8 @@ import java.net.URI
 
 
 
-include(":configgen-java")
+//include(":configgen-java")
+include(":configgen-kotlin")
 
 
 pluginManagement {
