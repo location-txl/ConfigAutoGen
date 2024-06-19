@@ -39,7 +39,6 @@ android {
     productFlavors{
         create("v1") {
             dimension = "product"
-
         }
         create("v2") {
             dimension = "product"
@@ -55,10 +54,58 @@ android {
             dimension = "device"
         }
     }
-
-
-
 }
+configWeaver {
+    customObject {
+        create("ConfigTest") {
+            addProperty("id", 1)
+            addProperty("u_Id", 2.1f)
+            addProperty("name", "tom")
+            addListProperty("uIdList"){
+                add(1)
+                add(2)
+            }
+            addListObject("config2"){
+                add {
+                    addProperty("ab", 1)
+                    addObject("user"){
+                        addProperty("name", "123")
+                    }
+                }
+                add {
+                    addProperty("ab", 1)
+                    addObject("user"){
+                        addProperty("id", 1)
+                    }
+                }
+            }
+            addObject("subObj"){
+                addProperty("hello2", "name")
+            }
+
+        }
+
+        create("LocalManager"){
+            addProperty("helloname","txla")
+            addObject("subObj"){
+                addProperty("hello2", "name")
+                addObject("sub2"){
+                    addProperty("nihao",123)
+                }
+            }
+            withFlavor("debug"){
+                addProperty("iddl2",1)
+                addObject("debugConfig"){
+                    addProperty("logLevel", 1)
+                }
+            }
+        }
+    }
+}
+
+
+
+
 
 dependencies {
     implementation(libs.core.ktx)
@@ -68,5 +115,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
-//    implementation("com.location.configGen:configGen:1.0.1")
 }

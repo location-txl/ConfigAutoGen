@@ -49,7 +49,8 @@ class KotlinClassGenerate(
     override fun createClassSpec(className: String, isInner: Boolean): KotlinClassSpec =
         KotlinClassSpec(KotlinClassSpec.Type.Object, className, isInner)
 
-    override fun createDataClassSpec(className: String, isInner: Boolean): KotlinClassSpec = KotlinClassSpec(KotlinClassSpec.Type.Data, className, isInner)
+    override fun createDataClassSpec(className: String, isInner: Boolean): KotlinClassSpec =
+        KotlinClassSpec(KotlinClassSpec.Type.Data, className, isInner)
 
 
     override fun addLazyField(

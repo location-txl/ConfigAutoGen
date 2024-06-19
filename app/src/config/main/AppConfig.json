@@ -1,4 +1,5 @@
 {
+  "txl": "1",
   "name": "app",
   "config": {
     "develop": true,

@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ConfigWeaver"
 include(":app")
+include(":sample")

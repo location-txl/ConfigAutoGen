@@ -2,6 +2,7 @@ package com.location.configgen.core.datanode
 
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
+import java.io.Serializable
 
 
 /**
@@ -13,16 +14,16 @@ import org.json.simple.JSONObject
 
 
 sealed class Node(open val docs: String) {
-    data class ObjectNode(
+     data class ObjectNode(
         val property: Map<String, Node?>, override val docs: String,
-    ) : Node(docs), Map<String, Node?> by property {
+    ) : Node(docs), Map<String, Node?> by property, Serializable {
         override fun toString(): String {
             return property.toString()
         }
     }
 
     data class ListNode(val list: List<Node?>, override val docs: String) : Node(docs),
-        List<Node?> by list {
+        List<Node?> by list,Serializable {
         override fun toString(): String {
             return list.toString()
         }
@@ -31,7 +32,7 @@ sealed class Node(open val docs: String) {
         val value: Any,
         override val docs: String,
         val type: ValueType? = null,
-    ) : Node(docs) {
+    ) : Node(docs),Serializable {
 
         val valueType: ValueType
             get() = when (this.value) {

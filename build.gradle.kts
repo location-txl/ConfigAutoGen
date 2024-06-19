@@ -1,14 +1,5 @@
-import com.android.build.api.dsl.Publishing
-import com.vanniktech.maven.publish.JavaLibrary
-import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.maven
-import org.gradle.api.publish.maven.MavenPublication
-import org.jetbrains.kotlin.fir.declarations.builder.buildScript
-
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
         maven{
@@ -86,12 +77,15 @@ subprojects {
             }
             val pluginId = project.properties["plugin.id"] as? String
                 ?: error("project gradle.properties must config plugin.id")
+            val pluginClass = project.properties["plugin.class"] as? String
+                ?: error("project gradle.properties must config plugin.class")
+
             pluginManager.withPlugin("java-gradle-plugin") {
                 extensions.configure<GradlePluginDevelopmentExtension> {
                     plugins {
                         create("com.location.configGen-kotlin") {
                             id = pluginId
-                            implementationClass = "com.location.configgen.core.ConfigGenPlugin"
+                            implementationClass = pluginClass
                             version = "1.0.9"
                         }
                     }

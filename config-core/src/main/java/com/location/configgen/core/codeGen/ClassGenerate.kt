@@ -38,10 +38,10 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
         )
         writeFile(
             """
-            configAutoGen plugin automatically generated, please do not modify
+            ConfigWeaver plugin automatically generated, please do not modify
             generateTime:$currentTime
             Version:$generateVersion
-            SourceCode:https://github.com/TLocation/ConfigAutoGen
+            SourceCode:https://github.com/location-txl/ConfigWeaver
         """.trimIndent(), classSpec
         )
     }

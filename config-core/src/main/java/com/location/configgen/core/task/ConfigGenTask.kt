@@ -1,5 +1,6 @@
-package com.location.configgen.core
+package com.location.configgen.core.task
 
+import com.location.configgen.core.CreateClassGenerateFunc
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
@@ -9,8 +10,10 @@ import com.location.configgen.core.datanode.toNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.tasks.Console
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.json.simple.JSONArray
@@ -26,8 +29,6 @@ import java.io.File
  */
 abstract class ConfigGenTask : DefaultTask() {
 
-
-
     @InputFiles
     val sourceDirs: ListProperty<File> = project.objects.listProperty(File::class.java)
 
@@ -35,64 +36,53 @@ abstract class ConfigGenTask : DefaultTask() {
     @OutputDirectory
     val outputDir: DirectoryProperty = project.objects.directoryProperty()
 
-    @Input
+    @Console
     var debug: Boolean = false
 
     @Input
     var packageName:String = ""
 
+    @get:Internal
+    var createClassGenerateFunc:CreateClassGenerateFunc? = null
 
 
 
     @TaskAction
     fun genCode(){
-        println("ConfigGenTask genCode")
-        sourceDirs.get().forEach {
-            println("sourceDir = ${it.absolutePath}")
+        if(debug){
+            println("ConfigGenTask genCode")
         }
-        println("outputDir = ${outputDir.get().asFile.absolutePath}")
+        require(createClassGenerateFunc != null)
+        if(debug){
+            sourceDirs.get().forEach {
+                println("sourceDir = ${it.absolutePath}")
+            }
+            println("outputDir = ${outputDir.get().asFile.absolutePath}")
+        }
 
         val configSourceList = mergeFiles()
+        if(configSourceList.isEmpty()){
+            //delete generate source file
+            outputDir.get().asFile.deleteRecursively()
+            return
+        }
 
         val jsonParser = JSONParser()
 
         configSourceList.forEach {
-            createClassGenerate(
+            createClassGenerateFunc?.invoke(
                 packageName,
                 outputDir.asFile.get().absolutePath,
                 (jsonParser.parse(it.json) as? JSONObject)?.toNode()
                     ?: error("json config only support first element is JsObj"),
                 it.configHeader.className
-            ).create()
+            )?.create()
         }
 
 
     }
 
-    private val classGenerateConstructor by lazy {
-        val classess =
-            Class.forName("com.location.configgen.ClassGenerateProvider").getMethod("provider")
-                .invoke(null) as Class<*>
-        classess.getConstructor(
-            String::class.java,
-            String::class.java,
-            Node.ObjectNode::class.java,
-            String::class.java
-        )
-    }
 
-    private fun createClassGenerate(
-        packageName: String,
-        outputDir: String,
-        objNode: Node.ObjectNode,
-        className: String
-    ): ClassGenerate<*> =
-        classGenerateConstructor.newInstance(
-            packageName,
-            outputDir,
-            objNode,
-            className
-        ) as ClassGenerate<*>
 
 
     private fun mergeFiles(): List<ConfigSource> {
