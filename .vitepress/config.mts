@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base:'/ConfigWeaver/',
   title: "ConfigWeaver",
   description: "ConfigWeaver is a Android Gradle plugin",
   themeConfig: {
