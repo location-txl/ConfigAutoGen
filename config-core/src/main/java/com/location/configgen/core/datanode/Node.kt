@@ -1,6 +1,7 @@
 package com.location.configgen.core.datanode
 
-import java.lang.reflect.Type
+import org.json.simple.JSONArray
+import org.json.simple.JSONObject
 
 
 /**
@@ -11,6 +12,59 @@ import java.lang.reflect.Type
  */
 
 
+sealed interface Node {
+    data class ObjectNode(
+        val property: Map<String, Node?>,
+    ) : Node
+
+    data class ListNode(val list: List<Node?>) : Node
+    data class ValueNode(
+        val value: Any,
+        val type: Type? = null,
+    ) : Node {
+        enum class Type(val typeName: String) {
+            STRING("String"),
+            INT("Int"),
+            BOOLEAN("Boolean"),
+            DOUBLE("Double"),
+            LONG("Long"),
+            FLOAT("Float"),
+        }
+    }
+}
+
+fun JSONObject.toNode(): Node.ObjectNode {
+    val propertyMap = LinkedHashMap<String, Node?>()
+
+    forEach { k, v: Any? ->
+        propertyMap[k.toString()] = parseJsValue(v)
+    }
+    return Node.ObjectNode(propertyMap.toMap())
+}
+
+private fun parseJsValue(
+    v: Any?,
+): Node? {
+    return when (v) {
+        is JSONObject -> {
+            v.toNode()
+        }
+
+        is JSONArray -> {
+            val nodeList = mutableListOf<Node?>()
+            v.forEach { jsItem ->
+                nodeList.add(parseJsValue(jsItem))
+            }
+            //TODO 检测里面的 item 都是一个类型 否则崩溃
+//            nodeList.filterNotNull()
+            Node.ListNode(nodeList.toList())
+        }
+
+        else -> {
+            v?.let { Node.ValueNode(it, null) }
+        }
+    }
+}
 
 
 val Any.valueType: ValueType
