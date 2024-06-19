@@ -2,9 +2,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
+    id("configgen.kotlin")
 }
-//apply(plugin = "configgen.java")
-apply(plugin = "configgen.kotlin")
 
 android {
     namespace = "com.location.configgen"
