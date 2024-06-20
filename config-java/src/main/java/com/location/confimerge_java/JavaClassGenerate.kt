@@ -4,8 +4,8 @@ import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.codeGen.fieldName
 import com.location.configgen.core.codeGen.methodName
+import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
-import com.location.configgen.core.datanode.valueType
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
@@ -15,8 +15,6 @@ import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
 import org.jetbrains.annotations.VisibleForTesting
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
 import java.io.File
 import javax.lang.model.element.Modifier
 import kotlin.random.Random
@@ -27,8 +25,13 @@ import kotlin.random.Random
  * time：2024/6/11 16:00
  * description：
  */
-class JavaClassGenerate(packageName: String, outputDir: String, json: String, className: String) :
-    ClassGenerate<JavaClassSpec>(packageName, outputDir, json, className) {
+class JavaClassGenerate(
+    packageName: String,
+    outputDir: String,
+    rootNode: Node.ObjectNode,
+    className: String
+) :
+    ClassGenerate<JavaClassSpec>(packageName, outputDir, rootNode, className) {
     companion object {
         @VisibleForTesting
         var inTest = false
@@ -56,7 +59,7 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
         createClassSpec(className, isInner)
 
     override fun addLazyField(
-        classSpec: JavaClassSpec, jsArray: JSONArray, objType: DataType.ObjectType
+        classSpec: JavaClassSpec, listNode: Node.ListNode, objType: DataType.ObjectType
     ) {
         val typeMap = objType.dataTypeMap
         val key = objType.rawKey
@@ -76,7 +79,7 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
                     controlFlow("synchronized(${rootClassName}.class)") {
                         controlFlow("if($fieldName == null)") {
                             addStatement("$fieldName = new \$T<>()", ArrayList::class.java)
-                            jsArray.mapNotNull { it as? JSONObject }.forEach {
+                            listNode.mapNotNull { it as? Node.ObjectNode }.forEach {
                                 addComment("value:$it")
 
                                 val codeBlockBuilder = CodeBlock.builder()
@@ -121,38 +124,41 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
     }
 
     private fun createNewInstanceParam(
-        jsObj: JSONObject, typeMap: Map<String, DataType>, methodSpecBuilder: MethodSpec.Builder
+        objNode: Node.ObjectNode,
+        typeMap: Map<String, DataType>,
+        methodSpecBuilder: MethodSpec.Builder
     ): CodeBlock {
         fun createParam(
-            dataType: DataType, value: Any, methodSpecBuilder: MethodSpec.Builder
+            dataType: DataType, value: Node, methodSpecBuilder: MethodSpec.Builder
         ): CodeBlock {
             return when (dataType) {
                 is DataType.ObjectType -> {
                     CodeBlock.builder()
                         .add("new \$T(", ClassName.get(dataType.pkgName, dataType.className)).add(
                             createNewInstanceParam(
-                                value as JSONObject, dataType.dataTypeMap, methodSpecBuilder
+                                value as Node.ObjectNode, dataType.dataTypeMap, methodSpecBuilder
                             )
                         ).add(")").build()
                 }
 
                 is DataType.BasisType -> {
+                    val v = (value as Node.ValueNode).value
                     when (dataType.type) {
                         ValueType.STRING -> CodeBlock.of(
-                            "\$S", value
+                            "\$S", v
                         )
 
 
                         ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> CodeBlock.of(
-                            "\$L", value
+                            "\$L", v
                         )
 
                         ValueType.LONG -> CodeBlock.of(
-                            "\$L", "${value}L"
+                            "\$L", "${v}L"
                         )
 
                         ValueType.FLOAT -> CodeBlock.of(
-                            "\$L", "${value}f"
+                            "\$L", "${v}f"
                         )
 
                     }
@@ -164,9 +170,9 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
 
         val codeBlockList = mutableListOf<CodeBlock>()
         typeMap.forEach { (k, dataType) ->
-            val value = jsObj[dataType.rawKey]
+            val value = objNode[dataType.rawKey]
             if (value == null && dataType.canNull.not()) {
-                error("$json in ${dataType.rawKey} is null, but canNull is false, please submit issue to fix it https://github.com/TLocation/ConfigAutoGen/issues")
+                error("${objNode.docs} in ${dataType.rawKey} is null, but canNull is false, please submit issue to fix it https://github.com/TLocation/ConfigAutoGen/issues")
             } else if (value == null) {
                 codeBlockList.add(CodeBlock.of(getDataTypeDefValue(dataType)))
                 return@forEach
@@ -181,7 +187,7 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
                     ), ArrayList::class.java
                 )
                 val childArray =
-                    value as? JSONArray ?: error("k:${dataType.rawKey} value is not JSONArray")
+                    value as? Node.ListNode ?: error("k:${dataType.rawKey} value is not JSONArray")
 
                 childArray.filterNotNull().forEach { childItem ->
                     val builder = CodeBlock.builder()
@@ -238,17 +244,17 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
     }
 
 
-    override fun addBasicArray(classSpec: JavaClassSpec, key: String, jsArray: JSONArray) {
+    override fun addBasicArray(classSpec: JavaClassSpec, key: String, list: List<Node.ValueNode?>) {
         val rawClassSpec = classSpec.classType
         val field = fieldSpec(
             name = key.fieldName,
             type = ParameterizedTypeName.get(
                 ClassName.get(List::class.java),
-                jsArray.firstOrNull()?.valueType?.typeName(box = true)
+                list.firstOrNull()?.valueType?.typeName(box = true)
                     ?: ClassName.get(Object::class.java)
             ),
         ) {
-            addJavadoc("key:$key - value:$jsArray")
+            addJavadoc("key:$key - value:$list")
             addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.VOLATILE)
         }
         rawClassSpec.addField(field)
@@ -264,7 +270,7 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
                 controlFlow("synchronized(${rootClassName}.class)") {
                     controlFlow("if(${field.name} == null)") {
                         addStatement("${field.name} = new \$T<>()", ArrayList::class.java)
-                        jsArray.forEach {
+                        list.forEach {
                             addComment("value:$it")
                             when (it!!.valueType) {
                                 ValueType.STRING -> addStatement(
@@ -292,7 +298,8 @@ class JavaClassGenerate(packageName: String, outputDir: String, json: String, cl
         })
     }
 
-    override fun addStaticFiled(typeSpecBuilder: JavaClassSpec, key: String, v: Any) {
+    //TODO 确认生成数据是否有问题
+    override fun addStaticFiled(typeSpecBuilder: JavaClassSpec, key: String, v: Node.ValueNode) {
 
         val fieldSpec = FieldSpec.builder(
             v.valueType.type, key.fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL

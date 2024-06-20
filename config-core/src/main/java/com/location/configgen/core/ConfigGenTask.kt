@@ -4,6 +4,8 @@ import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
 import com.location.configgen.core.config.readJsonFile
+import com.location.configgen.core.datanode.Node
+import com.location.configgen.core.datanode.toNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -52,9 +54,15 @@ abstract class ConfigGenTask : DefaultTask() {
 
         val configSourceList = mergeFiles()
 
+        val jsonParser = JSONParser()
+
         configSourceList.forEach {
             createClassGenerate(
-                packageName, outputDir.asFile.get().absolutePath, it.json, it.configHeader.className
+                packageName,
+                outputDir.asFile.get().absolutePath,
+                (jsonParser.parse(it.json) as? JSONObject)?.toNode()
+                    ?: error("json config only support first element is JsObj"),
+                it.configHeader.className
             ).create()
         }
 
@@ -65,19 +73,24 @@ abstract class ConfigGenTask : DefaultTask() {
         val classess =
             Class.forName("com.location.configgen.ClassGenerateProvider").getMethod("provider")
                 .invoke(null) as Class<*>
-            classess.getConstructor(String::class.java, String::class.java, String::class.java, String::class.java)
+        classess.getConstructor(
+            String::class.java,
+            String::class.java,
+            Node.ObjectNode::class.java,
+            String::class.java
+        )
     }
 
     private fun createClassGenerate(
         packageName: String,
         outputDir: String,
-        json: String,
+        objNode: Node.ObjectNode,
         className: String
     ): ClassGenerate<*> =
         classGenerateConstructor.newInstance(
             packageName,
             outputDir,
-            json,
+            objNode,
             className
         ) as ClassGenerate<*>
 

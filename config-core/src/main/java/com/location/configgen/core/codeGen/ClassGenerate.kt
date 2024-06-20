@@ -1,11 +1,8 @@
 package com.location.configgen.core.codeGen
 
+import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
-import com.location.configgen.core.datanode.valueType
 import org.jetbrains.annotations.VisibleForTesting
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
 import java.util.LinkedHashMap
 import java.util.Locale
 
@@ -18,7 +15,7 @@ import java.util.Locale
 abstract class ClassGenerate<T : ClassSpec<T>>(
     protected val rootPackageName: String,
     protected val outputDir: String,
-    protected val json: String,
+    protected val rootNode: Node.ObjectNode,
     protected val rootClassName: String,
     /**
      * 是否生成不稳定的数组 如果为 true 则会扫描整个数组的所有元素 生产一个最全的Object
@@ -32,14 +29,12 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
     abstract val generateVersion: String
 
     fun create() {
-        val jsonParser = JSONParser()
-        val jsPoint = jsonParser.parse(json)
         val classSpec = createClassSpec(rootClassName, isInner = false).apply {
-            addDoc("SourceJson:$json")
+            addDoc("sourceData:${rootNode.docs}")
         }
-        parseJsonObj(
+        parseObjNode(
             classSpec = classSpec,
-            jsObj = jsPoint as? JSONObject ?: error("root element must be json object")
+            objectNode = rootNode
         )
         writeFile(
             """
@@ -70,36 +65,35 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
     /**
      * 解析 json 对象并将里面的每个字段注入到 classSpec 中
      * @param classSpec T 类的信息
-     * @param jsObj JSONObject json 对象
+     * @param objectNode JSONObject json 对象
      */
-    private fun parseJsonObj(classSpec: T, jsObj: JSONObject) {
+    private fun parseObjNode(classSpec: T, objectNode: Node.ObjectNode) {
 
-        jsObj.forEach { k, v ->
+        objectNode.forEach { (k, v) ->
             when (v) {
-                is JSONObject -> {
-                    val innerClass = createClassSpec(k.toString().className, isInner = true).apply {
-                        addDoc("key:$k - value:$v")
+                is Node.ObjectNode -> {
+                    val innerClass = createClassSpec(k.className, isInner = true).apply {
+                        addDoc("key:$k - value:${v.docs}")
                     }
-                    parseJsonObj(innerClass, v)
+                    parseObjNode(innerClass, v)
                     classSpec.addInnerClass(innerClass)
                 }
 
-                is JSONArray -> {
-                    if (v.isNotEmpty()) {
-                        parseJsonArray(
+                is Node.ListNode -> {
+                    if (v.list.isNotEmpty()) {
+                        parseListNode(
                             classSpec, k.toString(), v, "$rootPackageName.$rootClassName"
                         )
                     } else {
-                        addBasicArray(classSpec, k.toString(), v)
+                        addBasicArray(classSpec, k.toString(), listOf())
                     }
                 }
 
+                is Node.ValueNode -> {
+                    addStaticFiled(classSpec, k.toString(), v)
+                }
                 else -> {
-                    if (v == null) {
-                        addStaticUnknownFiled(classSpec, k.toString())
-                    } else {
-                        addStaticFiled(classSpec, k.toString(), v)
-                    }
+                    addStaticUnknownFiled(classSpec, k.toString())
                 }
 
             }
@@ -111,10 +105,10 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
 
 
     @VisibleForTesting
-    fun parseJsArrayType(
-        jsArray: JSONArray, initValue: Map<String, JsArrayType>? = null
-    ): Map<String, JsArrayType> {
-        val filedMap = LinkedHashMap<String, JsArrayType>().apply {
+    fun parseListNodeType(
+        listNode: Node.ListNode, initValue: Map<String, ListNodeType>? = null
+    ): Map<String, ListNodeType> {
+        val filedMap = LinkedHashMap<String, ListNodeType>().apply {
             if (initValue != null) {
                 putAll(initValue)
             }
@@ -124,66 +118,71 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
         do {
             val typeCanNull = initValue != null || firstScan.not()
 
-            val obj = jsArray[index++] as? JSONObject ?: continue
+            val obj = listNode[index++] as? Node.ObjectNode ?: continue
             //可以为空的字段
             with(filedMap.keys.toMutableList()) {
-                removeAll(obj.keys.map { it.toString() })
+                removeAll(obj.map { it.key })
                 forEach { canNullKey ->
                     filedMap[canNullKey] = filedMap[canNullKey]!!.copy(canNull = true)
                 }
             }
 
-            obj.forEach { k, v ->
+            obj.forEach { (k, v) ->
                 val oldType = filedMap[k]
                 when (v) {
-                    is JSONArray -> {
+                    is Node.ListNode -> {
                         if (oldType == null && v.isEmpty()) {
                             filedMap[k.toString()] =
-                                JsArrayType(Unit, canNull = typeCanNull, isList = true)
+                                ListNodeType(Unit, canNull = typeCanNull, isList = true)
                         } else if (v.isNotEmpty()) {
                             when (val childV = v[0].also {
                                 require(it != null) {
                                     "not support array first child is null"
                                 }
                             }) {
-                                is JSONObject -> {
+                                is Node.ObjectNode -> {
                                     @Suppress("UNCHECKED_CAST")
                                     filedMap[k.toString()] =
                                         oldType?.copy(
-                                            type = parseJsArrayType(
-                                                v, oldType.type as? Map<String, JsArrayType>
+                                            type = parseListNodeType(
+                                                v, oldType.type as? Map<String, ListNodeType>
                                             ),
                                             isList = true,
-                                        ) ?: JsArrayType(
-                                            parseJsArrayType(v, null), canNull = typeCanNull,
+                                        ) ?: ListNodeType(
+                                            parseListNodeType(v, null), canNull = typeCanNull,
                                             isList = true,
                                         )
                                 }
 
-                                is JSONArray -> {
+                                is Node.ListNode -> {
                                     throw IllegalArgumentException("not support array in array")
                                 }
 
-                                else -> {
+                                is Node.ValueNode -> {
                                     filedMap[k.toString()] =
-                                        oldType?.copy(type = childV!!.valueType, isList = true)
-                                            ?: JsArrayType(
-                                                childV!!.valueType,
+                                        oldType?.copy(type = childV.valueType, isList = true)
+                                            ?: ListNodeType(
+                                                childV.valueType,
                                                 canNull = typeCanNull,
                                                 isList = true
                                             )
+                                }
+
+                                else -> {
+                                    error("unknown error")
                                 }
                             }
 
                         }
                     }
 
-                    is JSONObject -> {
+                    is Node.ObjectNode -> {
                         @Suppress("UNCHECKED_CAST")
-                        filedMap[k.toString()] = JsArrayType(
-                            parseJsArrayType(JSONArray().apply {
-                                add(v)
-                            }, initValue = oldType?.type as? Map<String, JsArrayType>),
+                        filedMap[k.toString()] = ListNodeType(
+                            parseListNodeType(
+                                Node.ListNode(listOf(v), v.docs),
+                                initValue = oldType?.type as? Map<String, ListNodeType>
+                            ),
                             canNull = typeCanNull
                         )
                     }
@@ -191,11 +190,14 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                     else -> {
                         if (oldType == null) {
                             filedMap[k.toString()] =
-                                JsArrayType(v?.valueType ?: Unit, typeCanNull || v == null)
+                                ListNodeType(
+                                    (v as? Node.ValueNode)?.valueType ?: Unit,
+                                    typeCanNull || v == null
+                                )
                         } else {
                             if (v == null) {
                                 filedMap[k.toString()] = oldType.copy(canNull = true)
-                            } else {
+                            } else if (v is Node.ValueNode) {
                                 val valueType = v.valueType
                                 if (oldType.type.javaClass == valueType.javaClass) {
                                     val oldValueType = oldType.type as ValueType
@@ -211,19 +213,24 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                                 } else {
                                     throw IllegalArgumentException("not support type change")
                                 }
+                            } else {
+                                error("unknown error")
                             }
                         }
                     }
                 }
             }
             firstScan = false
-        } while (unstableArray && index < jsArray.size)
+        } while (unstableArray && index < listNode.size)
         return filedMap
     }
 
     @VisibleForTesting
     fun createPropertyClass(
-        parentClass: T, classPrefix: String, innerPkgName: String, typeMap: Map<String, JsArrayType>
+        parentClass: T,
+        classPrefix: String,
+        innerPkgName: String,
+        typeMap: Map<String, ListNodeType>
     ): Map<String, DataType> {
         val propertyMap = LinkedHashMap<String, DataType>()
         typeMap.forEach { (k, v) ->
@@ -241,7 +248,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                         innerClass,
                         "$classPrefix.${className}",
                         nextPkgName,
-                        v.type as Map<String, JsArrayType>
+                        v.type as Map<String, ListNodeType>
                     )
                     addProperty(innerClass, innerPropertyMap)
                     parentClass.addInnerClass(innerClass)
@@ -271,24 +278,24 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
         return propertyMap
     }
 
-    private fun parseJsonArray(
-        parentClass: T, key: String, jsArray: JSONArray, innerPkgName: String
+    private fun parseListNode(
+        parentClass: T, key: String, listNode: Node.ListNode, innerPkgName: String
     ) {
 
-        when (jsArray[0]) {
-            is JSONObject -> {
-                val typeMap = parseJsArrayType(jsArray).also {
+        when (listNode[0]) {
+            is Node.ObjectNode -> {
+                val typeMap = parseListNodeType(listNode).also {
                     println("parseJsonArray obj:$it")
                 }
                 val innerClass = createDataClassSpec(key.className, true)
-                innerClass.addDoc("key:$key - value:$jsArray")
+                innerClass.addDoc("key:$key - value:$listNode")
                 val propertyMap = createPropertyClass(
                     innerClass, key.className, innerPkgName + "." + key.className, typeMap
                 )
                 addProperty(innerClass, propertyMap)
                 parentClass.addInnerClass(innerClass)
                 addLazyField(
-                    parentClass, jsArray, DataType.ObjectType(
+                    parentClass, listNode, DataType.ObjectType(
                         pkgName = innerPkgName,
                         className = key.className,
                         dataTypeMap = propertyMap,
@@ -299,12 +306,16 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                 )
             }
 
-            is JSONArray -> {
+            is Node.ListNode -> {
                 println("not support array in array")
             }
 
+            is Node.ValueNode -> {
+                addBasicArray(parentClass, key, listNode.map { it as? Node.ValueNode })
+            }
+
             else -> {
-                addBasicArray(parentClass, key, jsArray)
+                addBasicArray(parentClass, key, listOf())
             }
         }
     }
@@ -312,18 +323,18 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
     /**
      * 添加延迟初始化的 list 字段
      * @param classSpec T 宿主类
-     * @param jsArray JSONArray 数据源
+     * @param listNode JSONArray 数据源
      * @param objType ObjectType 字段
      */
     abstract fun addLazyField(
         classSpec: T,
-        jsArray: JSONArray,
+        listNode: Node.ListNode,
         objType: DataType.ObjectType,
     )
 
 
     protected abstract fun addBasicArray(
-        classSpec: T, key: String, jsArray: JSONArray
+        classSpec: T, key: String, list: List<Node.ValueNode?>
     )
 
 
@@ -333,7 +344,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
             return format.format(java.util.Date())
         }
 
-    abstract fun addStaticFiled(typeSpecBuilder: T, key: String, v: Any)
+    abstract fun addStaticFiled(typeSpecBuilder: T, key: String, v: Node.ValueNode)
     abstract fun addStaticUnknownFiled(typeSpecBuilder: T, key: String)
 
 }

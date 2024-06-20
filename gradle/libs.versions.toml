@@ -29,7 +29,7 @@ poet-kotlin = { group = "com.squareup", name = "kotlinpoet", version.ref = "poet
 agp-api = { group = "com.android.tools.build", name = "gradle-api", version.ref = "agp" }
 agp-tool = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 truth = "com.google.truth:truth:1.4.2"
-codeGen-java = "io.github.location-txl:configgen-java:0.0.1"
+codeGen-java = "io.github.location-txl:config-weaver-java:0.0.1"
 codeGen-kotlin = "io.github.location-txl:config-weaver-kotlin:0.0.1"
 
 [plugins]

@@ -3,8 +3,8 @@ package com.location.confimerge_kotlin
 import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.codeGen.fieldName
+import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
-import com.location.configgen.core.datanode.valueType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -18,8 +18,6 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
 import java.io.File
 import kotlin.random.Random
 
@@ -29,8 +27,13 @@ import kotlin.random.Random
  * time：2024/6/11 16:00
  * description：
  */
-class KotlinClassGenerate(packageName: String, outputDir: String, json: String, className: String) :
-    ClassGenerate<KotlinClassSpec>(packageName, outputDir, json, className) {
+class KotlinClassGenerate(
+    packageName: String,
+    outputDir: String,
+    rootNode: Node.ObjectNode,
+    className: String
+) :
+    ClassGenerate<KotlinClassSpec>(packageName, outputDir, rootNode, className) {
 
     override fun writeFile(fileComment: String, classSpec: KotlinClassSpec) {
         val typeSpec = classSpec.build()
@@ -49,38 +52,48 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
     override fun createDataClassSpec(className: String, isInner: Boolean): KotlinClassSpec = KotlinClassSpec(KotlinClassSpec.Type.Data, className, isInner)
 
 
-
     override fun addLazyField(
-        classSpec: KotlinClassSpec, jsArray: JSONArray, objType: DataType.ObjectType
+        classSpec: KotlinClassSpec, listNode: Node.ListNode, objType: DataType.ObjectType
     ) {
         val typeMap = objType.dataTypeMap
         val key = objType.rawKey
-            with(classSpec.classType) {
-                val fieldType = List::class.asClassName().parameterizedBy(ClassName(objType.pkgName, objType.className))
+        with(classSpec.classType) {
+            val fieldType = List::class.asClassName()
+                .parameterizedBy(ClassName(objType.pkgName, objType.className))
 
-                addProperty(propertySpec(
-                    key.fieldName, fieldType
-                ) {
-                   addKdoc("key:$key value:$jsArray")
-                    delegate(CodeBlock.builder().beginControlFlow("lazy")
-                        .addStatement(CodeBlock.builder().also {
-                            val initParamsList = mutableListOf<CodeBlock>()
-                            jsArray.mapNotNull { it as? JSONObject}.forEach { jsItem ->
-                                initParamsList.add(CodeBlock.builder().add("%T(", ClassName(objType.pkgName, objType.className))
+            addProperty(propertySpec(
+                key.fieldName, fieldType
+            ) {
+                addKdoc("key:$key value:$listNode")
+                delegate(CodeBlock.builder().beginControlFlow("lazy")
+                    .addStatement(CodeBlock.builder().also {
+                        val initParamsList = mutableListOf<CodeBlock>()
+                        listNode.mapNotNull { it as? Node.ObjectNode }.forEach { jsItem ->
+                            initParamsList.add(
+                                CodeBlock.builder().add(
+                                    "%T(",
+                                    ClassName(objType.pkgName, objType.className)
+                                )
                                     .add(createNewInstanceParam(jsItem, typeMap, it))
                                     .add(")")
-                                    .build())
-                            }
-                            it.addStatement(initParamsList.joinToCode(prefix = "listOf(", suffix = ")").toString())
-                            //add("listOf(").add(")")
+                                    .build()
+                            )
                         }
+                        it.addStatement(
+                            initParamsList.joinToCode(
+                                prefix = "listOf(",
+                                suffix = ")"
+                            ).toString()
+                        )
+                        //add("listOf(").add(")")
+                    }
 
-                            .build().toString())
-                        .endControlFlow()
-                        .build()
-                    )
-                })
-            }
+                        .build().toString())
+                    .endControlFlow()
+                    .build()
+                )
+            })
+        }
     }
 
 
@@ -88,11 +101,13 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
     private fun getDataTypeDefValue(dataType: DataType) = "null"
 
     private fun createNewInstanceParam(
-        jsObj: JSONObject, typeMap: Map<String, DataType>, parentCodeBlockBuilder:CodeBlock.Builder
+        objNode: Node.ObjectNode,
+        typeMap: Map<String, DataType>,
+        parentCodeBlockBuilder: CodeBlock.Builder
     ): CodeBlock {
         fun createParam(
             k:String?,
-            dataType: DataType, value: Any, methodSpecBuilder: CodeBlock.Builder
+            dataType: DataType, value: Node, methodSpecBuilder: CodeBlock.Builder
         ): CodeBlock {
             val paramCodeBlock = CodeBlock.builder().add("")
             if(k != null){
@@ -102,28 +117,29 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
                 is DataType.ObjectType -> {
                     paramCodeBlock.add("%T(", ClassName(dataType.pkgName, dataType.className)).add(
                         createNewInstanceParam(
-                            value as JSONObject, dataType.dataTypeMap, methodSpecBuilder
+                            value as Node.ObjectNode, dataType.dataTypeMap, methodSpecBuilder
                         )
                     ).add(")")
                 }
 
                 is DataType.BasisType -> {
+                    val v = (value as Node.ValueNode).value
                     when (dataType.type) {
                         ValueType.STRING -> paramCodeBlock.add(
-                            "%S", value
+                            "%S", v
                         )
 
 
                         ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> paramCodeBlock.add(
-                            "$value"
+                            "$v"
                         )
 
                         ValueType.LONG -> paramCodeBlock.add(
-                            "%L", "${value}L"
+                            "%L", "${v}L"
                         )
 
                         ValueType.FLOAT -> paramCodeBlock.add(
-                            "%L", "${value}f"
+                            "%L", "${v}f"
                         )
 
                     }
@@ -135,9 +151,9 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
 
         val codeBlockList = mutableListOf<CodeBlock>()
         typeMap.forEach { (k, dataType) ->
-            val value = jsObj[dataType.rawKey]
+            val value = objNode[dataType.rawKey]
             if (value == null && dataType.canNull.not()) {
-                error("$json in ${dataType.rawKey} is null, but canNull is false, please submit issue to fix it https://github.com/TLocation/ConfigAutoGen/issues")
+                error("${objNode.docs} in ${dataType.rawKey} is null, but canNull is false, please submit issue to fix it https://github.com/TLocation/ConfigAutoGen/issues")
             } else if (value == null) {
                 codeBlockList.add(CodeBlock.of("$k = ${getDataTypeDefValue(dataType)}"))
                 return@forEach
@@ -146,7 +162,7 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
 
             codeBlockList.add(if (dataType.isList) {
                 val childArray =
-                    value as? JSONArray ?: error("k:${dataType.rawKey} value is not JSONArray")
+                    value as? Node.ListNode ?: error("k:${dataType.rawKey} value is not JSONArray")
                 val validArray = childArray.filterNotNull()
                 if(validArray.isEmpty()){
                     CodeBlock.of("$k = listOf()")
@@ -203,30 +219,30 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
     }
 
 
-
-
-
-    override fun addBasicArray(classSpec: KotlinClassSpec, key: String, jsArray: JSONArray) {
-        val type = jsArray.firstOrNull()?.valueType
+    override fun addBasicArray(
+        classSpec: KotlinClassSpec,
+        key: String,
+        list: List<Node.ValueNode?>
+    ) {
+        val type = list.firstOrNull()?.valueType
         classSpec.classType.addProperty(propertySpec(
             key.fieldName, List::class.asClassName().parameterizedBy(
                 type?.asTypeName()
                     ?: NOTHING
             )
         ) {
-            if (type == null && jsArray.isNotEmpty()) {
-                error("generate list fail key:$key value:$jsArray")
+            if (type == null && list.isNotEmpty()) {
+                error("generate list fail key:$key value:$list")
             }
             addModifiers(
                 KModifier.PUBLIC,
-            ).addKdoc("key:$key value:$jsArray")
+            ).addKdoc("key:$key value:$list")
             delegate(CodeBlock.builder()
                 .beginControlFlow("lazy")
-
-
                 .addStatement(CodeBlock.builder().add("listOf(")
                     .also {
-                        it.add(jsArray.joinToCode { item ->
+                        //TODO 这里mapNotNull 一级下方 else
+                        it.add(list.mapNotNull { item -> item?.value }.joinToCode { item ->
                             when (type) {
                                 ValueType.STRING -> CodeBlock.of("%S", item)
                                 ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> CodeBlock.of(
@@ -250,7 +266,7 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
         })
     }
 
-    override fun addStaticFiled(typeSpecBuilder: KotlinClassSpec, key: String, v: Any) {
+    override fun addStaticFiled(typeSpecBuilder: KotlinClassSpec, key: String, v: Node.ValueNode) {
         typeSpecBuilder.classType.addProperty(propertySpec(
             key.fieldName, v.valueType.asTypeName()
         ) {
@@ -277,7 +293,6 @@ class KotlinClassGenerate(packageName: String, outputDir: String, json: String, 
            initializer("null")
         })
     }
-
 }
 
 private fun ValueType.asTypeName(): TypeName = when (type) {

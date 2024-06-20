@@ -1,13 +1,3 @@
-import com.google.common.truth.Truth.assertThat
-import com.location.configgen.core.codeGen.JsArrayType
-import com.location.configgen.core.datanode.ValueType
-import org.json.simple.JSONArray
-import org.json.simple.parser.JSONParser
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
-import java.io.File
-
 /**
  *
  * @author tianxiaolong

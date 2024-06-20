@@ -18,8 +18,8 @@ buildscript {
 
     }
     dependencies {
-//        classpath(libs.codeGen.java)
-        classpath(libs.codeGen.kotlin)
+        classpath(libs.codeGen.java)
+//        classpath(libs.codeGen.kotlin)
     }
 
 }
