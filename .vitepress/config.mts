@@ -7,24 +7,29 @@ export default defineConfig({
   description: "ConfigWeaver is a Android Gradle plugin",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    search: {
+      provider: 'local'
+    },
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' },
-
+      { text: '指南', link: '/guide/jianjie' },
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      "guide":[
+        {
+          text: '简介',
+          items: [
+            { text: '什么是ConfigWeaver', link: '/guide/introd/' },
+            { text: '快速开始', link: '/guide/introd/great_start' },
+
+          ]
+        }
+      ]
+    },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/location-txl/ConfigWeaver' }
     ]
   }
 })

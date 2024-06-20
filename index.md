@@ -8,7 +8,7 @@ hero:
   tagline: 生成结构化的配置代码
   actions:
     - theme: brand
-      text: Markdown Examples
+      text: 指南
       link: /markdown-examples
     - theme: alt
       text: API Examples
@@ -21,5 +21,11 @@ features:
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
   - title: Feature C
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+
+ ### Title <Badge type="tip" text="^1.9.0" />
+   
 ---
+
+
+<!--@include: ./guide/introd/great_start.md-->
 
