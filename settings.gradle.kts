@@ -1,3 +1,4 @@
+rootProject.name = "ConfigWeaver"
 include(":config-core")
 include(":config-java")
 include(":config-kotlin")
@@ -24,6 +25,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ConfigWeaver"
-include(":app")
-include(":sample")
+include(":sample:gradle-kt")
+include(":sample:gradle-groovy")

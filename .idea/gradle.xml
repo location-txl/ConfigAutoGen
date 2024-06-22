@@ -9,11 +9,12 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/config-core" />
             <option value="$PROJECT_DIR$/config-java" />
             <option value="$PROJECT_DIR$/config-kotlin" />
             <option value="$PROJECT_DIR$/sample" />
+            <option value="$PROJECT_DIR$/sample/gradle-groovy" />
+            <option value="$PROJECT_DIR$/sample/gradle-kt" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

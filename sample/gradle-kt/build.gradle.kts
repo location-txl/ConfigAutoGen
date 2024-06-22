@@ -2,7 +2,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    id("configgen.java")
+    id("configgen.kotlin")
 }
 
 android {
