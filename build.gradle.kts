@@ -36,8 +36,8 @@ subprojects {
             pluginManager.withPlugin("java") {
                 extensions.configure<JavaPluginExtension> {
                     withSourcesJar()
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
+                    sourceCompatibility = JavaVersion.VERSION_11
+                    targetCompatibility = JavaVersion.VERSION_11
 
                     tasks.named<Jar>("sourcesJar") {
                         archiveClassifier.set("sources")
@@ -69,6 +69,7 @@ subprojects {
             println("has")
             dependencies {
                 "implementation"(libs.bundles.codeGenCore)
+                "compileOnly"(libs.bundles.codeGenCompile)
                 "testImplementation"(libs.junit)
                 "testImplementation"(libs.truth)
                 depProjects.forEach {

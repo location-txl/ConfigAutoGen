@@ -14,7 +14,7 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
-import org.jetbrains.annotations.VisibleForTesting
+import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import javax.lang.model.element.Modifier
 import kotlin.random.Random

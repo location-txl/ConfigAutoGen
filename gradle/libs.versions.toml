@@ -1,5 +1,7 @@
 [versions]
-agp = "8.5.0"
+#插件依赖的 gradle 版本小一点 兼容性6.7.x gradle
+plugin-agp = "4.2.2"
+agp = "7.4.0"
 kotlin = "1.9.22"
 core-ktx = "1.9.0"
 junit = "4.13.2"
@@ -12,7 +14,7 @@ org-jetbrains-kotlin-jvm = "1.9.22"
 json-simple = "1.1.1"
 poet-java = "1.13.0"
 poet-kotlin = "1.17.0"
-mavenPublish = "0.28.0"
+mavenPublish = "0.25.3"
 
 
 [libraries]
@@ -26,8 +28,8 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 json-simple = { group = "com.googlecode.json-simple", name = "json-simple", version.ref = "json-simple" }
 poet-java = { group = "com.squareup", name = "javapoet", version.ref = "poet-java" }
 poet-kotlin = { group = "com.squareup", name = "kotlinpoet", version.ref = "poet-kotlin" }
-agp-api = { group = "com.android.tools.build", name = "gradle-api", version.ref = "agp" }
-agp-tool = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+agp-api = { group = "com.android.tools.build", name = "gradle-api", version.ref = "plugin-agp" }
+agp-tool = { group = "com.android.tools.build", name = "gradle", version.ref = "plugin-agp" }
 truth = "com.google.truth:truth:1.4.2"
 codeGen-java = "io.github.location-txl:config-weaver-java:0.0.1"
 codeGen-kotlin = "io.github.location-txl:config-weaver-kotlin:0.0.1"
@@ -39,5 +41,6 @@ org-jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "org
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
 [bundles]
-codeGenCore = ["json-simple", "agp-api", "agp-tool"]
+codeGenCompile = []
+codeGenCore = ["json-simple", "agp-tool", "agp-api"]
 

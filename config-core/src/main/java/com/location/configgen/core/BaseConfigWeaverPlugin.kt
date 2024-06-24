@@ -24,7 +24,11 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
     override fun apply(project: Project) {
 
 
-        val ext = project.extensions.create("configWeaver", extensionClass) as BaseConfigWeaverExtension
+        val ext = project.extensions.create(
+            "configWeaver",
+            extensionClass,
+            project
+        ) as BaseConfigWeaverExtension
 
         project.afterEvaluate {
             applyExtension(ext)
@@ -105,7 +109,7 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                     createClassGenerateFunc = createClassGenerate
                 }
                 it.registerJavaGeneratingTask(
-                    generateDynamicTask,
+                    generateDynamicTask.get(),
                     generateDynamicTask.get().outputDir.get().asFile
                 )
                 it.registerJavaGeneratingTask(task, task.outputDir.get().asFile)

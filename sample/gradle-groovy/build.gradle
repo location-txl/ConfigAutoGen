@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-//    id("configgen.java")
+    id("configgen.java")
 
 }
 
@@ -34,34 +34,34 @@ android {
     }
 }
 
-//configWeaver {
-////    hello2("2", "2")
-//    customObject {
-//        user {
-////            a = 1
-//            addProperty("a", 1)
-//            addProperty("ab", "2")
-//            addListProperty("ids"){ list ->
-//                list.add("1223")
-//                list.add("str")
-////                list.add(1)
-//            }
-//            addListObject("user_config"){ userList ->
-//                userList.add { item ->
-//                    item.addProperty("ab", "2")
-//                }
-//                userList.add { item ->
-//                    item.addProperty("ab", "3")
-//                }
-//            }
-//            addObject("config"){ config ->
-//                config.addProperty("config_id", "1")
-//            }
-//
-//
-//        }
-//    }
-//}
+configWeaver {
+//    hello2("2", "2")
+    customObject {
+        user {
+//            a = 1
+            addProperty("a", 1)
+            addProperty("ab", "2")
+            addListProperty("ids") { list ->
+                list.add("1223")
+                list.add("str")
+//                list.add(1)
+            }
+            addListObject("user_config") { userList ->
+                userList.add { item ->
+                    item.addProperty("ab", "2")
+                }
+                userList.add { item ->
+                    item.addProperty("ab", "3")
+                }
+            }
+            addObject("config") { config ->
+                config.addProperty("config_id", "1")
+            }
+
+
+        }
+    }
+}
 
 dependencies {
 

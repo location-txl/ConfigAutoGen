@@ -2,7 +2,7 @@ package com.location.configgen.core.codeGen
 
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
-import org.jetbrains.annotations.VisibleForTesting
+import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.util.LinkedHashMap
 import java.util.Locale
 
