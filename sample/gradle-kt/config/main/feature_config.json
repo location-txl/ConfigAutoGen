@@ -1,0 +1,5 @@
+{
+  "enable_log": true,
+  // 是否显示支付页面
+  "show_pay_page": true
+}

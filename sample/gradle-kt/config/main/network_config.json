@@ -1,0 +1,9 @@
+{
+  "base_url": "https://www.xxx.com",
+  "print_log": true,
+  "timeout": {
+    "read": 1000,
+    "write": 1000,
+    "connect": 1000
+  }
+}

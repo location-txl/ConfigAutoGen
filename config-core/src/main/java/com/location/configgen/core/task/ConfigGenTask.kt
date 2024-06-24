@@ -61,12 +61,7 @@ abstract class ConfigGenTask : DefaultTask() {
         }
 
         val configSourceList = mergeFiles()
-        if(configSourceList.isEmpty()){
-            //delete generate source file
-            outputDir.get().asFile.deleteRecursively()
-            return
-        }
-
+        outputDir.get().asFile.deleteRecursively()
         val jsonParser = JSONParser()
 
         configSourceList.forEach {
@@ -107,7 +102,7 @@ abstract class ConfigGenTask : DefaultTask() {
             val mergeJson = mergeJson(u)
             if (mergeJson != null) {
                 val configHeader = ConfigHeader(
-                    t,
+                    mergeJson.fileHeader.className,
                     mergeJson.fileHeader.classNameAutoGenerate
                 )
                 if(debug){

@@ -65,9 +65,10 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                     ConfigGenTask::class.java
                 )
                 with(parseJsonTask.get()) {
-                    sourceDirs.add(project.file("src/config/main"))
+                    sourceDirs.add(project.file("config/main"))
+                    println("test main path:${project.file("config/main")}")
                     sourceDirs.addAll(project.files(flavors.map { mergeName ->
-                        project.file("src/config/${mergeName}")
+                        project.file("config/${mergeName}")
                     }))
                     outputDir.set(File("${project.getConfigWeaverSourceDir("json")}${it.name}${File.separator}"))
                     debug = ext.debugLog
