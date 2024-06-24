@@ -22,8 +22,6 @@ import java.io.File
  */
 abstract class BaseConfigWeaverPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-
-
         val ext = project.extensions.create(
             "configWeaver",
             extensionClass,
@@ -37,16 +35,7 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                 /**
                  * productFlavors 排序越靠前，优先级越高
                  */
-                val defaultPackage = android.defaultConfig.applicationId ?: "com.location.config"
-                if (ext.debugLog) {
-                    println("packageName = $defaultPackage")
-                    println("variant.name = ${it.name}")
-                    println("flavorName isNull:${it.flavorName.isBlank()}")
-                    println("flavorName ${it.flavorName}")
-                    it.productFlavors.forEach {
-                        println("productFlavor name = ${it.name}")
-                    }
-                }
+                val defaultPackage = debugFlavor(android, ext, it)
 
                 /**
                  * 排序越靠后，优先级越高
@@ -69,22 +58,23 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                 val suffix = it.name.replaceFirstChar { name ->
                     if (name.isLowerCase()) name.uppercase() else name.toString()
                 }
-                val task = project.tasks.create(
+                val parseJsonTask = project.tasks.registerTask(
                     "configWeaverGenerate${
                         suffix
                     }Config",
                     ConfigGenTask::class.java
-                ) { task ->
-                    task.sourceDirs.add(project.file("src/config/main"))
-                    task.sourceDirs.addAll(project.files(flavors.map { mergeName ->
+                )
+                with(parseJsonTask.get()) {
+                    sourceDirs.add(project.file("src/config/main"))
+                    sourceDirs.addAll(project.files(flavors.map { mergeName ->
                         project.file("src/config/${mergeName}")
                     }))
-                    task.outputDir.set(File("${project.getConfigWeaverSourceDir("json")}${it.name}${File.separator}"))
-                    task.debug = ext.debugLog
-                    task.packageName = defaultPackage
-                    task.createClassGenerateFunc = createClassGenerate
-
+                    outputDir.set(File("${project.getConfigWeaverSourceDir("json")}${it.name}${File.separator}"))
+                    debug = ext.debugLog
+                    packageName = defaultPackage
+                    createClassGenerateFunc = createClassGenerate
                 }
+
 
                 if (ext.debugLog) {
                     println("mergeDirs = $flavors")
@@ -92,7 +82,7 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
 
                 val generateDynamicTask = project.tasks.registerTask(
                     "configWeaverGenerate${suffix}CustomConfig",
-                    ConfigDynamicGenerateTask::class.java
+                    ConfigDynamicGenerateTask::class.java,
                 )
                 generateDynamicTask.get().apply {
                     nodeList =
@@ -112,11 +102,34 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                     generateDynamicTask.get(),
                     generateDynamicTask.get().outputDir.get().asFile
                 )
-                it.registerJavaGeneratingTask(task, task.outputDir.get().asFile)
+                it.registerJavaGeneratingTask(
+                    parseJsonTask.get(),
+                    parseJsonTask.get().outputDir.get().asFile
+                )
             }
         }
     }
 
+    private fun debugFlavor(
+        android: BaseExtension,
+        ext: BaseConfigWeaverExtension,
+        it: BaseVariant
+    ): String {
+        /**
+         * productFlavors 排序越靠前，优先级越高
+         */
+        val defaultPackage = android.defaultConfig.applicationId ?: "com.location.config"
+        if (ext.debugLog) {
+            println("packageName = $defaultPackage")
+            println("variant.name = ${it.name}")
+            println("flavorName isNull:${it.flavorName.isBlank()}")
+            println("flavorName ${it.flavorName}")
+            it.productFlavors.forEach {
+                println("productFlavor name = ${it.name}")
+            }
+        }
+        return defaultPackage
+    }
 
 
     @Suppress("DEPRECATION")
@@ -136,16 +149,29 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
         }
     }
 
+    /**
+     * 遍历每个变体
+     * @param flavor List<String> 当前变体的flavor buildType 组合 越靠后优先级越高
+     * @param variant BaseVariant
+     */
     protected open fun eachVariant(flavor:List<String>, variant: BaseVariant){}
 
+    /**
+     * 应用扩展属性 子类可强转为自己的扩展类
+     * @param extension BaseConfigWeaverExtension
+     */
     protected open fun applyExtension(extension: BaseConfigWeaverExtension){}
 
+    /**
+     * 子类重新该方法，返回自己的生成实现类
+     * @see ClassGenerate
+     */
     abstract val createClassGenerate: CreateClassGenerateFunc
 
 
-
-
-
+    /**
+     * 子类重新该方法，返回自己的扩展类
+     */
     open val extensionClass:Class<*>
         get() = BaseConfigWeaverExtension::class.java
 

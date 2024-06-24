@@ -18,7 +18,6 @@ import kotlin.random.nextUInt
  */
 @CustomObjectScopeMarker
 class DynamicObject(val name: String, private val project: Project) : DynamicObjectApi {
-    private val id = Random.nextUInt()
 
     private val propertyMap = mutableMapOf<String, Node?>()
 

@@ -48,6 +48,11 @@ interface DynamicObjectApi {
     fun addListObject(name: String, action: CustomListObjectScope.() -> Unit)
 
 
+    /**
+     * 添加一个子结构体
+     * @param name String
+     * @param action [@kotlin.ExtensionFunctionType] Function1<DynamicObjectApi, Unit>
+     */
     fun addObject(name:String, action:DynamicObjectApi.() -> Unit)
 
 

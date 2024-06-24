@@ -6,13 +6,11 @@ import java.io.Serializable
 
 
 /**
- *
- * @author tianxiaolong
- * time：2024/6/7 11:05
- * description：
+ * 用于描述配置文件的数据结构
+ * [com.location.configgen.core.codeGen.ClassGenerate] 会根据这个结构生成对应的代码
+ * @property docs String 用于生成代码时的注释
+ * @constructor
  */
-
-
 sealed class Node(open val docs: String) {
      data class ObjectNode(
         val property: Map<String, Node?>, override val docs: String,

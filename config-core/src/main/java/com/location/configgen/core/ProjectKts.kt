@@ -13,8 +13,7 @@ import java.io.File
  */
 
 
-
-fun Project.getConfigWeaverSourceDir(key: String):String =
+fun Project.getConfigWeaverSourceDir(key: String): String =
     "${layout.buildDirectory.asFile.get().absolutePath}${File.separator}generated${File.separator}source${File.separator}configWeaver${File.separator}$key${File.separator}"
 
 
