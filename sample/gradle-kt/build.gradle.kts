@@ -35,28 +35,52 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    flavorDimensions("product", "device")
+    flavorDimensions("server", "product")
     productFlavors{
-        create("v1") {
+        create("free") {
             dimension = "product"
         }
-        create("v2") {
+        create("pro") {
             dimension = "product"
 
         }
-        create("v3") {
-            dimension = "product"
+        create("serverTest") {
+            dimension = "server"
         }
-        create("pad"){
-            dimension = "device"
-        }
-        create("phone") {
-            dimension = "device"
+        create("serverRelease") {
+            dimension = "server"
         }
     }
 }
 configWeaver {
+    debugLog = true
     customObject {
+        create("SampleConfig") {
+            addProperty("value_string", "hello configWeaver")
+            addProperty("value_int", 1)
+            addProperty("value_float", 1.1f)
+            addProperty("value_boolean", true)
+            addObject("sample_sub_config") {
+                addProperty("sub_value_string", "hello sub configWeaver")
+            }
+            withFlavor("free") {
+                addProperty("value_string", "use product free hello configWeaver")
+            }
+            addListProperty("testList") {
+                add(1)
+                add(2)
+            }
+            addListObject("testListObject") {
+                add {
+                    addProperty("test_child_1", "hello configWeaver")
+                    addProperty("test_child_2", 1)
+                }
+                add {
+                    addProperty("test_child_2", 3)
+                }
+            }
+        }
+
         create("ConfigTest") {
             addProperty("id", 1)
             addProperty("u_Id", 2.1f)
