@@ -2,7 +2,8 @@
 <br>
 <Badge type="tip" text="^1.9.0" /><br>
 
-## 1. 根目录build.gradle 引入插件
+## 安装插件
+### 1. 根目录build.gradle 引入插件
 ::: code-group
 
 ```kotlin [build.gradle.kts]
@@ -35,8 +36,9 @@ buildscript {
 
 }
 ```
+
 :::
-## 2. app/build.gradle 配置插件
+### 2. app/build.gradle 配置插件
 ::: code-group
 
 ```kotlin [app/build.gradle.kts]
@@ -54,6 +56,57 @@ plugins {
 }
 ```
 :::
+
+## 目录结构
+在和 src 同级目录下创建 `config` 文件夹，用于存放配置json文件 
+
+```text{3}
+RecyclerViewDragSample
+ ├── build.gradle.kts
+ ├── settings.gradle.kts
+ ├── gradle.properties
+ ├── gradle
+ └── app
+     ├── config // [!code ++]
+     │   ├──   main // [!code ++]
+     │   └──   release // [!code ++]
+     ├── src
+     ├── build.gradle.kts
+     ├── proguard-rules.pro
+     └── build
+```
+`main` 文件夹为主配置文件夹 `debug、release`等 是变体配置文件夹
+编译时会扫描 `main` 文件夹和`当前编译的变体 BuildType` 文件夹下的同名 json 文件进行合并生成对应的 Kotlin/Java 文件
+
+假设当前有两种变体类型 默认的 BuildType
+```kotlin [app/build.gradle.kts]
+    flavorDimensions("server", "product")
+    productFlavors{
+        create("free") {
+            dimension = "product"
+        }
+        create("pro") {
+            dimension = "product"
+        }
+        create("serverTest"){
+            dimension = "server"
+        }
+        create("serverRelease") {
+            dimension = "server"
+        }
+    }
+```
+**product** 选择 `free` **server** 选择 `serverTest` 时 **BuildType** 为 `debug` 时
+<br>
+> 优先级越靠后优先级越高
+
+会合并 `main` 、`serverTest` 、 `free` 、`serverTestFree`、 `serverTestFreeDebug`文件夹下的同名 json 文件生成对应的 Kotlin/Java 文件
+
+## gradle 中动态配置
+除了在 config 文件夹下配置 json 文件外，还可以在 gradle 中动态配置
+```kotlin [app/build.gradle.kts]
+
+```
 ## 使用 json 生成配置
 
 ### 添加配置文件 生成 Kotlin
