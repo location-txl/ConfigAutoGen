@@ -30,9 +30,8 @@ export default defineConfig({
     },
     nav: [
       { text: 'Home', link: '/' },
-      { text: '指南', link: '/guide/introd/' },
+      { text: '指南', link: '/guide/intro/' },
       { text: '更新日志', link: ''},
-
     ],
 
     sidebar: {
@@ -40,9 +39,8 @@ export default defineConfig({
         {
           text: '简介',
           items: [
-            { text: '什么是ConfigWeaver', link: '/guide/introd/' },
-            { text: '快速开始', link: '/guide/introd/quick_start' },
-
+            { text: '什么是ConfigWeaver', link: '/guide/intro/' },
+            { text: '快速开始', link: '/guide/intro/quick_start' },
           ]
         }
       ]

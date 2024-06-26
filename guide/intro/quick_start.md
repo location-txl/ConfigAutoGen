@@ -41,14 +41,14 @@ buildscript {
 ### 2. app/build.gradle 配置插件
 ::: code-group
 
-```kotlin [app/build.gradle.kts]
+```kotlin [app/build.gradle.kts]{4}
 plugins {
     id("com.android.application")
     id("com.android.library")
     id("com.configweaver")
 }
 ```
-```groovy [app/build.gradle]
+```groovy [app/build.gradle]{4}
 plugins {
     id 'com.android.application'
     id 'com.android.library'
@@ -58,10 +58,10 @@ plugins {
 :::
 
 ## 目录结构
-在和 src 同级目录下创建 `config` 文件夹，用于存放配置json文件 
+在 `src` 同级目录下创建 `config` 文件夹，用于存放配置json文件 
 
-```text{3}
-RecyclerViewDragSample
+```text
+ConfigWeaverSample
  ├── build.gradle.kts
  ├── settings.gradle.kts
  ├── gradle.properties
@@ -104,8 +104,141 @@ RecyclerViewDragSample
 
 ## gradle 中动态配置
 除了在 config 文件夹下配置 json 文件外，还可以在 gradle 中动态配置
-```kotlin [app/build.gradle.kts]
+::: code-group
+```kotlin [build.gradle.kts]
+configWeaver {
+    customObject {
+        create("SampleConfig") { //添加一个 SampleConfig 对象
+            addProperty("value_string", "hello configWeaver") //添加一个属性
+            addProperty("value_int", 1)
+            addProperty("value_float", 1.1f)
+            addProperty("value_boolean", true)
+            addObject("sample_sub_config") { //添加一个子对象
+                //给当前子对象添加属性
+                addProperty("sub_value_string", "hello sub configWeaver") 
+            }
+            withFlavor("free") {//在编译 free 变体时执行此闭包
+                //替换 value_string 属性的值 这里也可以额外添加属性
+                addProperty("value_string", "use product free hello configWeaver")
+            }
+            addListProperty("testList") {//添加一个基础类型的列表
+               //添加元素
+                add(1)
+                add(2)
+            }
+            addListObject("testListObject") { //添加一个对象列表
+                add {
+                    //给当前 item 添加属性
+                    addProperty("test_child_1", "hello configWeaver")
+                    addProperty("test_child_2", 1)
+                }
+                add {
+                    addProperty("test_child_2", 3)
+                }
+            }
+        }
+}
+```
+```groovy [build.gradle]
+configWeaver {
+    customObject {
+        SampleConfig {
+            addProperty "value_string", "hello configWeaver"
+            addProperty "value_int", 1
+            addProperty "value_float", 1.1f
+            addProperty "value_boolean", true
+            addObject("sample_sub_config") { config ->
+                config.addProperty("sub_value_string", "hello sub configWeaver")
+            }
+            withFlavor("free"){freeFlavor ->
+                freeFlavor.addProperty("value_string", "use product free hello configWeaver")
+            }
+            addListProperty("testList"){ testList ->
+                testList.add(1)
+                testList.add(2)
+            }
+            addListObject("testListObject") { testListObject ->
+                testListObject.add { item ->
+                    item.addProperty "test_child_1", "hello configWeaver"
+                    item.addProperty "test_child_2", 1
+                }
+                testListObject.add { item ->
+                    item.addProperty "test_child_2", 3
+                }
+            }
+        }
+    }
+}
+```
+:::
+编译时将会生成以下Kotlin 文件
+```kotlin
+package com.location.configgen
 
+import kotlin.Boolean
+import kotlin.Float
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.List
+
+
+public object SampleConfig {
+  /**
+   * key:value_string value:use product free hello configWeaver
+   */
+  public const val valueString: String = "use product free hello configWeaver"
+
+  /**
+   * key:value_int value:1
+   */
+  public const val valueInt: Int = 1
+
+  /**
+   * key:value_float value:1.1
+   */
+  public const val valueFloat: Float = 1.1f
+
+  /**
+   * key:value_boolean value:true
+   */
+  public const val valueBoolean: Boolean = true
+
+  /**
+   * key:testList value:[1, 2]
+   */
+  public val testList: List<Int> by lazy {
+    listOf(1, 2)
+  }
+
+  /**
+   * key:testListObject value:[{test_child_1=hello configWeaver, test_child_2=1}, {test_child_2=3}]
+   */
+  public val testListObject: List<com.location.configgen.SampleConfig.TestListObject> by lazy {
+    listOf(com.location.configgen.SampleConfig.TestListObject(testChild1 = "hello configWeaver",
+        testChild2 = 1), com.location.configgen.SampleConfig.TestListObject(testChild1 = null,
+        testChild2 = 3))
+
+  }
+
+  /**
+   * key:sample_sub_config - value:
+   */
+  public object SampleSubConfig {
+    /**
+     * key:sub_value_string value:hello sub configWeaver
+     */
+    public const val subValueString: String = "hello sub configWeaver"
+  }
+
+  /**
+   * key:testListObject - value:[{test_child_1=hello configWeaver, test_child_2=1},
+   * {test_child_2=3}]
+   */
+  public final data class TestListObject(
+    public val testChild1: String?,
+    public val testChild2: Int,
+  )
+}
 ```
 ## 使用 json 生成配置
 

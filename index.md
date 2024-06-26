@@ -29,5 +29,5 @@ features:
 ---
 
 
-<!--@include: ./guide/introd/quick_start.md-->
+<!--@include: ./guide/intro/quick_start.md-->
 
