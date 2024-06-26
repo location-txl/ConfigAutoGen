@@ -1,5 +1,6 @@
 package com.location.configgen.core.codeGen
 
+import com.location.configgen.core.config.GITHUB_URL
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
@@ -15,7 +16,7 @@ import java.util.Locale
 abstract class ClassGenerate<T : ClassSpec<T>>(
     protected val rootPackageName: String,
     protected val outputDir: String,
-    protected val rootNode: Node.ObjectNode,
+    private val rootNode: Node.ObjectNode,
     protected val rootClassName: String,
     /**
      * 是否生成不稳定的数组 如果为 true 则会扫描整个数组的所有元素 生产一个最全的Object
@@ -41,7 +42,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
             ConfigWeaver plugin automatically generated, please do not modify
             generateTime:$currentTime
             Version:$generateVersion
-            SourceCode:https://github.com/location-txl/ConfigWeaver
+            SourceCode:$GITHUB_URL
         """.trimIndent(), classSpec
         )
     }
@@ -56,14 +57,25 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
     )
 
 
+    /**
+     * 创建一个用于生成Class 的对象
+     * @param className String 类名
+     * @param isInner Boolean 是否是内部类 对于生成 java 代码 内部类需要加上 static
+     * @return T
+     * @see ClassSpec
+     */
     abstract fun createClassSpec(className: String, isInner: Boolean): T
 
 
+    /**
+     * 创建数据类 当前用于列表内的自定义结构体
+     * @see createClassSpec
+     */
     abstract fun createDataClassSpec(className: String, isInner: Boolean): T
 
 
     /**
-     * 解析 json 对象并将里面的每个字段注入到 classSpec 中
+     * 解析 ObjectNode 并将里面的每个字段注入到 classSpec 中
      * @param classSpec T 类的信息
      * @param objectNode JSONObject json 对象
      */
@@ -82,28 +94,60 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                 is Node.ListNode -> {
                     if (v.list.isNotEmpty()) {
                         parseListNode(
-                            classSpec, k.toString(), v, "$rootPackageName.$rootClassName"
+                            classSpec, k, v, "$rootPackageName.$rootClassName"
                         )
                     } else {
-                        addBasicArray(classSpec, k.toString(), listOf())
+                        addBasicArray(classSpec, k, listOf())
                     }
                 }
 
                 is Node.ValueNode -> {
-                    addStaticFiled(classSpec, k.toString(), v)
+                    addStaticFiled(classSpec, k, v)
                 }
                 else -> {
-                    addStaticUnknownFiled(classSpec, k.toString())
+                    addStaticUnknownFiled(classSpec, k)
                 }
 
             }
         }
     }
 
-
+    /**
+     * 给当前类添加属性
+     * @param classSpec T 创建类的实例
+     * @param propertyMap Map<String, DataType> 需要添加的属性
+     * 在这个方法中需要将属性添加到 classSpec 中 且需要暴露改属性的赋值函数
+     */
     protected abstract fun addProperty(classSpec: T, propertyMap: Map<String, DataType>)
 
 
+    /**
+     * 解析列表里面的所有字段 这里会判断[unstableArray]属性
+     * 如果为 true 则会扫描整个数组的所有元素 生产一个最全的属性集
+     *
+     * 假设当前有需要解析的 json list 为
+     *
+     *  ```
+     *     [
+     *       {
+     *        "id" : 1,
+     *        "name" : "java"
+     *       },
+     *       {
+     *        "id" : 1719402751297,
+     *        "name" : "kotlin",
+     *        "desc" : "great language"
+     *       }
+     *     ]
+     * ```
+     * 在这个 json 中 id 和 name 是必须的字段 但是 desc 是可选的字段
+     * 如果 [unstableArray] 为 false 则只会解析到 id 和 name 字段 当实际赋值时 desc 字段无法赋值 会直接报错
+     * 在全量扫描时 也会对类型进行类型提升 在第一个iterm 中 `id` 会别解析为 `int` 在第二个iterm 中 `id` 会被解析为 `long` 进行类型提升
+     *
+     * @param listNode ListNode 数据源
+     * @param initValue Map<String, ListNodeType>? 上一次扫描的类型 在 list 里面嵌套 object 里面嵌套 list 的情况下会多次扫描
+     * @return Map<String, ListNodeType> 返回 list 里面包含的属性
+     */
     @VisibleForTesting
     fun parseListNodeType(
         listNode: Node.ListNode, initValue: Map<String, ListNodeType>? = null
@@ -114,6 +158,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
             }
         }
         var index = 0
+        //是否是第一次扫描
         var firstScan = true
         do {
             val typeCanNull = initValue != null || firstScan.not()
@@ -132,7 +177,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                 when (v) {
                     is Node.ListNode -> {
                         if (oldType == null && v.isEmpty()) {
-                            filedMap[k.toString()] =
+                            filedMap[k] =
                                 ListNodeType(Unit, canNull = typeCanNull, isList = true)
                         } else if (v.isNotEmpty()) {
                             when (val childV = v[0].also {
@@ -142,7 +187,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                             }) {
                                 is Node.ObjectNode -> {
                                     @Suppress("UNCHECKED_CAST")
-                                    filedMap[k.toString()] =
+                                    filedMap[k] =
                                         oldType?.copy(
                                             type = parseListNodeType(
                                                 v, oldType.type as? Map<String, ListNodeType>
@@ -159,7 +204,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
                                 }
 
                                 is Node.ValueNode -> {
-                                    filedMap[k.toString()] =
+                                    filedMap[k] =
                                         oldType?.copy(type = childV.valueType, isList = true)
                                             ?: ListNodeType(
                                                 childV.valueType,
@@ -178,7 +223,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
 
                     is Node.ObjectNode -> {
                         @Suppress("UNCHECKED_CAST")
-                        filedMap[k.toString()] = ListNodeType(
+                        filedMap[k] = ListNodeType(
                             parseListNodeType(
                                 Node.ListNode(listOf(v), v.docs),
                                 initValue = oldType?.type as? Map<String, ListNodeType>
@@ -189,27 +234,27 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
 
                     else -> {
                         if (oldType == null) {
-                            filedMap[k.toString()] =
+                            filedMap[k] =
                                 ListNodeType(
                                     (v as? Node.ValueNode)?.valueType ?: Unit,
                                     typeCanNull || v == null
                                 )
                         } else {
                             if (v == null) {
-                                filedMap[k.toString()] = oldType.copy(canNull = true)
+                                filedMap[k] = oldType.copy(canNull = true)
                             } else if (v is Node.ValueNode) {
                                 val valueType = v.valueType
                                 if (oldType.type.javaClass == valueType.javaClass) {
                                     val oldValueType = oldType.type as ValueType
                                     if (oldValueType.groupId == valueType.groupId && oldValueType.ordinal < valueType.ordinal) {
                                         //可以向上提升
-                                        filedMap[k.toString()] = oldType.copy(type = valueType)
+                                        filedMap[k] = oldType.copy(type = valueType)
                                     } else if (oldValueType.groupId != valueType.groupId) {
                                         throw IllegalArgumentException("not support type change")
                                     }
                                 } else if (oldType.type is Unit) {
                                     //直接替换类型
-                                    filedMap[k.toString()] = oldType.copy(type = valueType)
+                                    filedMap[k] = oldType.copy(type = valueType)
                                 } else {
                                     throw IllegalArgumentException("not support type change")
                                 }
@@ -225,6 +270,14 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
         return filedMap
     }
 
+    /**
+     * 为当前[parentClass] 添加属性
+     * @param parentClass T 类的描述信息
+     * @param classPrefix String 类的前缀 对于内部类需要加上外部类的前缀
+     * @param innerPkgName String 要基于[parentClass]创建内部类的时候的包名
+     * @param typeMap Map<String, ListNodeType> 当前[parentClass]应该包含的属性信息
+     * @return Map<String, DataType> 返回当前[parentClass]包含的属性结构信息 有序的 创建[parentClass]时需要根据当前返回值去填充属性
+     */
     @VisibleForTesting
     fun createPropertyClass(
         parentClass: T,
@@ -278,6 +331,13 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
         return propertyMap
     }
 
+    /**
+     * 为[listNode]生成属性结构 并赋值
+     * @param parentClass T
+     * @param key String
+     * @param listNode ListNode
+     * @param innerPkgName String
+     */
     private fun parseListNode(
         parentClass: T, key: String, listNode: Node.ListNode, innerPkgName: String
     ) {
@@ -333,6 +393,12 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
     )
 
 
+    /**
+     * 为基础类型列表赋值 如 string int long等等
+     * @param classSpec T
+     * @param key String
+     * @param list List<ValueNode?>
+     */
     protected abstract fun addBasicArray(
         classSpec: T, key: String, list: List<Node.ValueNode?>
     )
@@ -344,7 +410,26 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
             return format.format(java.util.Date())
         }
 
+    /**
+     * 添加静态字段
+     * @param typeSpecBuilder T
+     * @param key String
+     * @param v ValueNode
+     */
     abstract fun addStaticFiled(typeSpecBuilder: T, key: String, v: Node.ValueNode)
+
+
+    /**
+     * 添加静态的未知字段 如当前 json 为
+     * ```
+     * {
+     *    "name" : null
+     * }
+     * ```
+     * 对于 name 属性 无法推断类型 会被赋值为未知类型 在 Java 中 为 [Object] Kotlin中为[Nothing]
+     * @param typeSpecBuilder T
+     * @param key String
+     */
     abstract fun addStaticUnknownFiled(typeSpecBuilder: T, key: String)
 
 }

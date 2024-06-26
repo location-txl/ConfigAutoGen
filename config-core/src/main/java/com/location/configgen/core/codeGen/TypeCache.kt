@@ -26,3 +26,4 @@ sealed class DataType(val rawKey: String, val canNull: Boolean, val isList: Bool
     class UnknownType(rawKey: String, canNull: Boolean, isList: Boolean) :
         DataType(rawKey, canNull, isList)
 }
+
