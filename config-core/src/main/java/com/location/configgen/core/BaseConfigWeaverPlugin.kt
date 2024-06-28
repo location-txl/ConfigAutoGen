@@ -21,6 +21,7 @@ import java.io.File
  * description：
  */
 abstract class BaseConfigWeaverPlugin : Plugin<Project> {
+
     override fun apply(project: Project) {
         val ext = project.extensions.create(
             "configWeaver",
@@ -66,7 +67,6 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                 )
                 with(parseJsonTask.get()) {
                     sourceDirs.add(project.file("config/main"))
-                    println("test main path:${project.file("config/main")}")
                     sourceDirs.addAll(project.files(flavors.map { mergeName ->
                         project.file("config/${mergeName}")
                     }))

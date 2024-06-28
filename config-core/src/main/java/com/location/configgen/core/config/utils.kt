@@ -9,8 +9,9 @@ package com.location.configgen.core.config
 
 
 private val reg = Regex("^[a-zA-Z_][a-zA-Z0-9_]*$")
-fun checkPropertyValid(key: String) {
+fun checkPropertyValid(key: String): String {
     if (!reg.matches(key)) {
-        error("property '$key' is incorrect naming  you should use [a-zA-Z_][a-zA-Z0-9_]*")
+        error("property '$key' is incorrect naming  check reg:$reg")
     }
+    return key
 }

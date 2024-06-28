@@ -2,7 +2,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    id("configMerge.kotlin")
+    id("configweaver.kotlin")
 }
 
 android {
@@ -53,9 +53,11 @@ android {
     }
 }
 configWeaver {
-    debugLog = true
+    debugLog = false
     customObject {
-        create("SampleConfig") {
+
+
+    create("SampleConfig") {
             addProperty("value_string", "hello configWeaver")
             addProperty("value_int", 1)
             addProperty("value_float", 1.1f)

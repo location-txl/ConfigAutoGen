@@ -1,5 +1,6 @@
 package com.location.configgen.core.dynamic
 
+import com.location.configgen.core.BaseConfigWeaverExtension
 import com.location.configgen.core.config.checkPropertyValid
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
@@ -19,11 +20,13 @@ import kotlin.random.nextUInt
 @CustomObjectScopeMarker
 class DynamicObject(val name: String, private val project: Project) : DynamicObjectApi {
 
+    private val debug by lazy(LazyThreadSafetyMode.NONE) {
+        project.extensions.getByType(BaseConfigWeaverExtension::class.java).debugLog
+    }
+
     private val propertyMap = mutableMapOf<String, Node?>()
 
     private val flavorLazyMap = mutableMapOf<String, DynamicObjectApi.() -> Unit>()
-
-
 
     fun getObjectNode(flavorList: List<String>): Node.ObjectNode? {
         val tmpPropertyMap = propertyMap.toMutableMap()
@@ -48,7 +51,8 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
         srcMap.putAll(replaceMap)
         objectMap.forEach { (k, node) ->
             if(srcMap.containsKey(k)){
-                val (map,doc) = (srcMap[k] as? Node.ObjectNode) ?:error("custom object merge error '$k' wwo instances of different types.")
+                val (map, doc) = (srcMap[k] as? Node.ObjectNode)
+                    ?: error("custom object merge error '$k' instances of different types.")
                 val tempSrcMap = map.toMutableMap()
                 mergeProperty(tempSrcMap, (node as Node.ObjectNode).property)
                 srcMap[k] = Node.ObjectNode(tempSrcMap, doc)
@@ -67,8 +71,10 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
 
     private fun addProperty(name: String, value: Any, type: ValueType) {
         checkPropertyKey(name)
-        println("addProperty${this.hashCode()} name = $name, value = $value")
         propertyMap[name] = Node.ValueNode(value, docs = "", type = type)
+        debug {
+            println("addProperty name = $name, value = $value")
+        }
     }
 
     override fun addProperty(name: String, value: String) {
@@ -114,7 +120,9 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
         }
         customPropertyScope.action()
         propertyMap[name] = Node.ListNode(list.toList(), docs = "")
-        println("addListProperty:$list")
+        debug {
+            println("addListProperty:$list")
+        }
     }
 
     override fun addListObject(name: String, action: CustomListObjectScope.() -> Unit) {
@@ -158,6 +166,13 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
     fun methodMissing(name: String, args: Any): Any {
         println("invokeMethod methodName:$name")
         return ""
+    }
+
+
+    private inline fun debug(action: () -> Unit) {
+        if (debug) {
+            action()
+        }
     }
 
 }

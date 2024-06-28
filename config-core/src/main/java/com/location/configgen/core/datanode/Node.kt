@@ -1,5 +1,6 @@
 package com.location.configgen.core.datanode
 
+import com.location.configgen.core.config.checkPropertyValid
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import java.io.Serializable
@@ -56,7 +57,7 @@ fun JSONObject.toNode(): Node.ObjectNode {
     val propertyMap = LinkedHashMap<String, Node?>()
 
     forEach { k, v: Any? ->
-        propertyMap[k.toString()] = parseJsValue(v)
+        propertyMap[checkPropertyValid(k.toString())] = parseJsValue(v)
     }
     return Node.ObjectNode(propertyMap.toMap(), this.toString())
 }

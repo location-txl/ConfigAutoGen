@@ -9,7 +9,7 @@ buildscript {
 
     }
     dependencies {
-        classpath(libs.codeGen.java)
+//        classpath(libs.codeGen.java)
         classpath(libs.codeGen.kotlin)
     }
 

@@ -41,10 +41,6 @@ open class ConfigDynamicGenerateTask: DefaultTask() {
             )?.create()
         }
     }
-
-
-
-
 }
 
 

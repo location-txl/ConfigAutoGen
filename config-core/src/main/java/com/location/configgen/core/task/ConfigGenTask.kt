@@ -4,6 +4,7 @@ import com.location.configgen.core.CreateClassGenerateFunc
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
+import com.location.configgen.core.config.checkPropertyValid
 import com.location.configgen.core.config.readJsonFile
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.toNode
@@ -65,6 +66,7 @@ abstract class ConfigGenTask : DefaultTask() {
         val jsonParser = JSONParser()
 
         configSourceList.forEach {
+            checkPropertyValid(it.configHeader.className)
             createClassGenerateFunc?.invoke(
                 packageName,
                 outputDir.asFile.get().absolutePath,

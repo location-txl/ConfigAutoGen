@@ -1,5 +1,6 @@
 package com.location.configgen.core
 
+import com.location.configgen.core.config.checkPropertyValid
 import com.location.configgen.core.dynamic.DynamicObject
 import com.location.configgen.core.dynamic.DynamicObject.Factory
 import org.gradle.api.Action
@@ -15,7 +16,13 @@ import org.gradle.api.Project
  */
 open class BaseConfigWeaverExtension(project: Project) {
     val customObject: NamedDomainObjectContainer<DynamicObject> =
-        project.container(DynamicObject::class.java, Factory(project))
+        project.container(DynamicObject::class.java, Factory(project)).apply {
+            whenObjectAdded {
+                //监测 create 的对象名字是否符合标准
+                checkPropertyValid(it.name)
+            }
+        }
+
 
     /**
      * 是否开启debug日志

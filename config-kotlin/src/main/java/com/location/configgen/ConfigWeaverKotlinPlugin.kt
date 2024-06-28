@@ -3,6 +3,7 @@ package com.location.configgen
 import com.location.configgen.core.BaseConfigWeaverPlugin
 import com.location.configgen.core.CreateClassGenerateFunc
 import com.location.confimerge_kotlin.KotlinClassGenerate
+import org.gradle.api.Project
 
 class ConfigWeaverKotlinPlugin : BaseConfigWeaverPlugin() {
     override val createClassGenerate: CreateClassGenerateFunc

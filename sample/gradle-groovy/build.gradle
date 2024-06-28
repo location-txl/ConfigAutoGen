@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    id("configgen.java")
+//    id("configgen.java")
 
 }
 
@@ -34,35 +34,35 @@ android {
     }
 }
 
-configWeaver {
-    customObject {
-        SampleConfig {
-            addProperty "value_string", "hello configWeaver"
-            addProperty "value_int", 1
-            addProperty "value_float", 1.1f
-            addProperty "value_boolean", true
-            addObject("sample_sub_config") { config ->
-                config.addProperty("sub_value_string", "hello sub configWeaver")
-            }
-            withFlavor("free") { freeFlavor ->
-                freeFlavor.addProperty("value_string", "use product free hello configWeaver")
-            }
-            addListProperty("testList") { testList ->
-                testList.add(1)
-                testList.add(2)
-            }
-            addListObject("testListObject") { testListObject ->
-                testListObject.add { item ->
-                    item.addProperty "test_child_1", "hello configWeaver"
-                    item.addProperty "test_child_2", 1
-                }
-                testListObject.add { item ->
-                    item.addProperty "test_child_2", 3
-                }
-            }
-        }
-    }
-}
+//configWeaver {
+//    customObject {
+//        SampleConfig {
+//            addProperty "value_string", "hello configWeaver"
+//            addProperty "value_int", 1
+//            addProperty "value_float", 1.1f
+//            addProperty "value_boolean", true
+//            addObject("sample_sub_config") { config ->
+//                config.addProperty("sub_value_string", "hello sub configWeaver")
+//            }
+//            withFlavor("free") { freeFlavor ->
+//                freeFlavor.addProperty("value_string", "use product free hello configWeaver")
+//            }
+//            addListProperty("testList") { testList ->
+//                testList.add(1)
+//                testList.add(2)
+//            }
+//            addListObject("testListObject") { testListObject ->
+//                testListObject.add { item ->
+//                    item.addProperty "test_child_1", "hello configWeaver"
+//                    item.addProperty "test_child_2", 1
+//                }
+//                testListObject.add { item ->
+//                    item.addProperty "test_child_2", 3
+//                }
+//            }
+//        }
+//    }
+//}
 
 dependencies {
 
