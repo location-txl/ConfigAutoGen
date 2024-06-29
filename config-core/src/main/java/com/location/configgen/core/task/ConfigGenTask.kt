@@ -66,7 +66,7 @@ abstract class ConfigGenTask : DefaultTask() {
         val jsonParser = JSONParser()
 
         configSourceList.forEach {
-            checkPropertyValid(it.configHeader.className)
+            checkPropertyValid(it.configHeader.className, "config json file")
             createClassGenerateFunc?.invoke(
                 packageName,
                 outputDir.asFile.get().absolutePath,

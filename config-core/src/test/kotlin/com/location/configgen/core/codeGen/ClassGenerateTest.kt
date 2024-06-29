@@ -16,11 +16,6 @@ import org.junit.Test
  */
 class ClassGenerateTest {
 
-    @Before
-    fun setUp() {
-
-    }
-
 
     @Test
     fun testParseListNodeType() {
@@ -94,8 +89,8 @@ class ClassGenerateTest {
 
 
         var classGenerate =
-            TestClassGenerateImpl("com.configweaver.test", "", objNode, "TestClass", true)
-        val result = classGenerate.parseListNodeType(listNode)
+            createClassGenerate(objNode)
+        var result = classGenerate.parseListNodeType(listNode)
         assertThat(result["name"]).isEqualTo(
             ListNodeType(
                 ValueType.STRING,
@@ -136,5 +131,104 @@ class ClassGenerateTest {
                 ), canNull = true, isList = true
             )
         )
+
+
+        classGenerate =
+            createClassGenerate(objNode, unstableArray = false)
+        result = classGenerate.parseListNodeType(listNode)
+        assertThat(result["name"]).isEqualTo(
+            ListNodeType(
+                ValueType.STRING,
+                canNull = false,
+                isList = false
+            )
+        )
+        assertThat(result["id"]).isNull()
+        assertThat(result["basicList"]).isEqualTo(
+            ListNodeType(
+                ValueType.INT,
+                canNull = false,
+                isList = true
+            )
+        )
+        assertThat(result["emptyList"]).isEqualTo(ListNodeType(Unit, canNull = false, isList = true))
+        assertThat(result["subObject"]).isEqualTo(
+            ListNodeType(
+                mapOf(
+                    "id" to ListNodeType(ValueType.INT, canNull = false, isList = false),
+                    "name" to ListNodeType(ValueType.STRING, canNull = false, isList = false),
+                    "desc" to ListNodeType(Unit, canNull = true, isList = false),
+                ), canNull = false, isList = false
+            )
+        )
+        assertThat(result["childList"]).isEqualTo(
+            ListNodeType(
+                mapOf(
+                    "id" to ListNodeType(ValueType.INT, canNull = false, isList = false),
+                ), canNull = false, isList = true
+            )
+        )
     }
+
+
+    @Test
+    fun testListFirstNull(){
+        val listNode = Node.ListNode(
+            listOf(
+                Node.ObjectNode(mapOf(
+                    "list" to Node.ListNode(listOf(null), ""),
+
+                ),""),
+            ), "" )
+        val classGenerate =
+            createClassGenerate(Node.ObjectNode(mapOf("list" to listNode), ""))
+        try {
+            classGenerate.parseListNodeType(listNode)
+            error("test fail")
+        }catch (e:Exception){
+            assertThat(e.message).isEqualTo("not support array first child is null")
+        }
+    }
+
+    @Test
+    fun testListList(){
+        val listNode = Node.ListNode(
+            listOf(
+                Node.ObjectNode(mapOf(
+                    "list" to Node.ListNode(listOf(
+                        Node.ListNode(listOf(),"")
+                    ), ""),
+
+                    ),""),
+            ), "" )
+        val classGenerate =
+            createClassGenerate(Node.ObjectNode(mapOf("list" to listNode), ""))
+        try {
+            classGenerate.parseListNodeType(listNode)
+            error("test fail")
+        }catch (e:Exception){
+            assertThat(e.message).isEqualTo("not support array in array")
+        }
+    }
+
+
+    @Test
+    fun testTypeChange(){
+        val listNode = Node.ListNode(
+            listOf(
+               Node.ObjectNode(mapOf("name" to Node.ValueNode("kotlin", "")),""),
+               Node.ObjectNode(mapOf("name" to Node.ValueNode(1, "")),""),
+            ), "" )
+        val classGenerate =
+            createClassGenerate(Node.ObjectNode(mapOf("list" to listNode), ""))
+        try {
+            classGenerate.parseListNodeType(listNode)
+            error("test fail")
+        }catch (e:Exception){
+            assertThat(e.message).isEqualTo("not support type change")
+        }
+    }
+
+
+    private fun createClassGenerate(objNode: Node.ObjectNode, unstableArray:Boolean = true) = TestClassGenerateImpl("com.configweaver.test", "", objNode, "TestClass", unstableArray)
 }
