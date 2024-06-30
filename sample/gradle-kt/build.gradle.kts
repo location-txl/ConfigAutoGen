@@ -1,8 +1,10 @@
+import org.jetbrains.kotlin.fir.declarations.builder.buildConstructor
+
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    id("configweaver.kotlin")
+    id("configgen.java")
 }
 
 android {
@@ -17,6 +19,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("int", "a", "1")
     }
 
     buildTypes {
@@ -53,35 +56,81 @@ android {
     }
 }
 configWeaver {
-    debugLog = false
+    debugLog = true
+
+    java{
+        nullSafe = true
+    }
+
+//    java {
+//        nullSafe = true
+//    }
+
     customObject {
 
-
-    create("SampleConfig") {
-            addProperty("value_string", "hello configWeaver")
-            addProperty("value_int", 1)
-            addProperty("value_float", 1.1f)
-            addProperty("value_boolean", true)
-            addObject("sample_sub_config") {
-                addProperty("sub_value_string", "hello sub configWeaver")
-            }
-            withFlavor("free") {
-                addProperty("value_string", "use product free hello configWeaver")
-            }
-            addListProperty("testList") {
+        create("HostConfig2"){
+            addProperty("url", "http://localhost:3000")
+            addListProperty("list"){
                 add(1)
                 add(2)
+                add(3)
+                add(4)
+                add(5)
             }
-            addListObject("testListObject") {
+            addListObject("apis"){
                 add {
-                    addProperty("test_child_1", "hello configWeaver")
-                    addProperty("test_child_2", 1)
+                    addProperty("path", "getName")
+                    addProperty("name", "1")
+                    addProperty("id", 1)
                 }
                 add {
-                    addProperty("test_child_2", 3)
+                    addProperty("path", "getAge")
+                    addProperty("name", "2")
+                    addProperty("id", 1719734598204)
+                }
+                add {
+                    addProperty("path", "getAddress")
+                    addProperty("name", "3")
                 }
             }
+            addObject("timeout"){
+                addProperty("read", 10000)
+                addProperty("connect", 1)
+            }
+
+            withFlavor("free"){
+                addProperty("url", "www.debug.com")
+                addProperty("id", 1)
+            }
+
         }
+
+
+        create("SampleConfig") {
+                addProperty("value_string", "hello configWeaver")
+                addProperty("value_int", 1)
+                addProperty("value_float", 1.1f)
+                addProperty("value_boolean", true)
+                addObject("sample_sub_config") {
+                    addProperty("sub_value_string", "hello sub configWeaver")
+                }
+                withFlavor("free") {
+                    addProperty("value_string", "use product free hello configWeaver")
+                }
+                addListProperty("testList") {
+                    add(1)
+                    add(2)
+                }
+                addListObject("testListObject") {
+                    add {
+                        addProperty("test_child_1", "hello configWeaver")
+                        addProperty("test_child_2", 1)
+                    }
+                    add {
+                        addProperty("test_child_2", 3)
+                    }
+                }
+            }
 
         create("ConfigTest") {
             addProperty("id", 1)

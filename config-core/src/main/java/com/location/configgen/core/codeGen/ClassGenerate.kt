@@ -344,9 +344,7 @@ abstract class ClassGenerate<T : ClassSpec<T>>(
 
         when (listNode[0]) {
             is Node.ObjectNode -> {
-                val typeMap = parseListNodeType(listNode).also {
-                    println("parseJsonArray obj:$it")
-                }
+                val typeMap = parseListNodeType(listNode)
                 val innerClass = createDataClassSpec(key.className, true)
                 innerClass.addDoc("key:$key - value:$listNode")
                 val propertyMap = createPropertyClass(

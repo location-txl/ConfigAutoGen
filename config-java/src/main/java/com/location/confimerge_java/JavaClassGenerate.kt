@@ -6,6 +6,7 @@ import com.location.configgen.core.codeGen.fieldName
 import com.location.configgen.core.codeGen.methodName
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
+import com.location.configgen.defJavaOptions
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
@@ -14,6 +15,7 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
+import org.gradle.api.Project
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import javax.lang.model.element.Modifier
@@ -220,8 +222,18 @@ class JavaClassGenerate(
                         ClassName.get(List::class.java), it
                     ) else it
                 }
+
                 addField(fieldSpec(key, typeName) {
                     addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                    if (defJavaOptions.nullSafe && ((value as? DataType.BasisType)?.type.let { t -> t == ValueType.STRING || t == null })) {
+                        if(value.canNull){
+                            addAnnotation(ClassName.get(defJavaOptions.nullSafeAnnotation.packageName, defJavaOptions.nullSafeAnnotation.nullable))
+                        }else{
+                            addAnnotation(ClassName.get(defJavaOptions.nullSafeAnnotation.packageName, defJavaOptions.nullSafeAnnotation.notNull))
+                        }
+                    }
+
+
                 })
                 constructor.addParameter(typeName, key)
                 constructor.addStatement("this.${key} = $key")
@@ -306,9 +318,9 @@ class JavaClassGenerate(
         ).addJavadoc("key:$key value:$v")
         when (v.valueType) {
             ValueType.STRING -> fieldSpec.initializer("\$S", v)
-            ValueType.INT, ValueType.BOOLEAN, ValueType.LONG -> fieldSpec.initializer("\$L", v)
+            ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> fieldSpec.initializer("\$L", v)
             ValueType.FLOAT -> fieldSpec.initializer("\$Lf", v)
-            ValueType.DOUBLE -> fieldSpec.initializer("\$Ld", v)
+            ValueType.LONG -> fieldSpec.initializer("\$LL", v)
         }
         typeSpecBuilder.classType.addField(fieldSpec.build())
     }

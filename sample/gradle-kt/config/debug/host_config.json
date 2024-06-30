@@ -1,0 +1,7 @@
+{
+  "url": "www.debug.com",
+  "timeout": {
+    "connect": 1
+  },
+  "oo": 1.2
+}

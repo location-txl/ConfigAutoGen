@@ -111,6 +111,7 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
         val customPropertyScope = object : CustomPropertyScope<T> {
             override fun add(value: T) {
                 if (value != null) {
+                    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
                     if (list.isNotEmpty() && value!!::class.java != list.first().value::class.java) {
                         error("list type must be same")
                     }
@@ -160,12 +161,6 @@ class DynamicObject(val name: String, private val project: Project) : DynamicObj
 
     class Factory(private val project: Project) : NamedDomainObjectFactory<DynamicObject> {
         override fun create(name: String): DynamicObject = DynamicObject(name, project)
-    }
-
-
-    fun methodMissing(name: String, args: Any): Any {
-        println("invokeMethod methodName:$name")
-        return ""
     }
 
 

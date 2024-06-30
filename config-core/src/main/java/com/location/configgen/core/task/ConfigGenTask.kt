@@ -100,7 +100,7 @@ abstract class ConfigGenTask : DefaultTask() {
             }
         }
         val configSourcesList = mutableListOf<ConfigSource>()
-        fileMaps.forEach { (t, u) ->
+        fileMaps.forEach { (_, u) ->
             val mergeJson = mergeJson(u)
             if (mergeJson != null) {
                 val configHeader = ConfigHeader(
