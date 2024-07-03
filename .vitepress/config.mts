@@ -39,7 +39,14 @@ export default defineConfig({
         {
           text: '简介',
           items: [
-            { text: '什么是ConfigWeaver', link: '/guide/intro/' },
+            { text: 'ConfigWeaver是什么', link: '/guide/intro/' },
+            { text: '快速开始', link: '/guide/intro/quick_start' },
+          ]
+        },
+        {
+          text: 'json配置',
+          items: [
+            { text: '合并规则', link: '/guide/json/merge_rule' },
             { text: '快速开始', link: '/guide/intro/quick_start' },
           ]
         }
