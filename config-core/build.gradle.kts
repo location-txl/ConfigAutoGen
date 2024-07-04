@@ -16,7 +16,6 @@ dependencies {
     compileOnly(gradleApi())
     implementation(libs.bundles.codeGenCore)
     implementation(libs.bundles.codeGenCompile)
-    implementation(libs.poet.kotlin)
     testImplementation(libs.junit)
     testImplementation(libs.truth)
 

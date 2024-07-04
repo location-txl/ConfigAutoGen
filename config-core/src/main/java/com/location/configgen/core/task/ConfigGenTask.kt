@@ -11,11 +11,14 @@ import com.location.configgen.core.datanode.toNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Console
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -28,9 +31,11 @@ import java.io.File
  * time：2024/6/7 10:22
  * description：
  */
+//@CacheableTask
 abstract class ConfigGenTask : DefaultTask() {
 
-    @InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:InputFiles
     val sourceDirs: ListProperty<File> = project.objects.listProperty(File::class.java)
 
 

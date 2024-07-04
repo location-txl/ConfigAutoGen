@@ -7,12 +7,48 @@
 	tools:context=".MainActivity">
 
 	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="@string/app_name"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent" />
+		app:layout_constraintTop_toTopOf="parent"
+		android:id="@+id/app_log"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+	<TextView
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/app_log"
+		android:id="@+id/show_pay_page"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+
+	<TextView
+		android:id="@+id/base_url"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/show_pay_page"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+	<TextView
+		android:id="@+id/network_debug_log"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/base_url"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+	<TextView
+		android:id="@+id/timeout"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/network_debug_log"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/apis_list"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/timeout"
+		app:layout_constraintBottom_toBottomOf="parent"
+		android:layout_width="wrap_content"
+		android:layout_height="0dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

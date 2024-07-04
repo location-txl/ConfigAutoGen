@@ -1,9 +1,71 @@
 {
   "base_url": "https://www.xxx.com",
-  "print_log": true,
+  "debug_log": false,
   "timeout": {
     "read": 1000,
     "write": 1000,
     "connect": 1000
-  }
+  },
+  "apis": [
+    {
+      "name": "login",
+      "url": "/login",
+      "method": "POST",
+      "headers": {
+        "Content_Type": "application/json"
+      },
+      "body": {
+        "username": "admin",
+        "password": "admin"
+      }
+    },
+    {
+      "name": "get_user",
+      "url": "/user",
+      "method": "GET",
+      "headers": {
+        "Content_Type": "application/json"
+      }
+    },
+    {
+      "name": "get_user_by_id",
+      "url": "/user/{id}",
+      "method": "GET",
+      "headers": {
+        "Content_Type": "application/json"
+      }
+    },
+    {
+      "name": "create_user",
+      "url": "/user",
+      "method": "POST",
+      "headers": {
+        "Content_Type": "application/json"
+      },
+      "body": {
+        "username": "test",
+        "password": "test"
+      }
+    },
+    {
+      "name": "update_user",
+      "url": "/user/{id}",
+      "method": "PUT",
+      "headers": {
+        "Content_Type": "application/json"
+      },
+      "body": {
+        "username": "test",
+        "password": "test"
+      }
+    },
+    {
+      "name": "delete_user",
+      "url": "/user/{id}",
+      "method": "DELETE",
+      "headers": {
+        "Content_Type": "application/json"
+      }
+    }
+  ]
 }

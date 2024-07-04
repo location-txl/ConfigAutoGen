@@ -1,3 +1,8 @@
 <resources>
 	<string name="app_name">ConfigAutoGen</string>
+	<string name="show_app_log">显示日志:%b</string>
+	<string name="show_pay_page">显示支付界面:%b</string>
+	<string name="base_url">api 请求 host：%s</string>
+	<string name="show_network_debug_log">显示网络日志:%b</string>
+	<string name="net_work_timeout">请求api 连接超时:%d 读取超时:%d 写入超时:%d</string>
 </resources>

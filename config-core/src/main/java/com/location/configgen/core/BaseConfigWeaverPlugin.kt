@@ -4,6 +4,7 @@ import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.api.BaseVariant
+import com.android.build.gradle.internal.tasks.factory.TaskConfigAction
 import com.android.build.gradle.internal.tasks.factory.registerTask
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.datanode.Node
@@ -24,97 +25,97 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         val ext = project.extensions.create(
-            "configWeaver",
-            extensionClass,
-            project
+            "configWeaver", extensionClass, project
         ) as BaseConfigWeaverExtension
 
-        project.afterEvaluate {
-            applyExtension(ext)
-            val android: BaseExtension = project.extensions.getByType(BaseExtension::class.java)
-            forEachVariant(android) {
-                /**
-                 * productFlavors 排序越靠前，优先级越高
-                 */
-                val defaultPackage = debugFlavor(android, ext, it)
+        applyExtension(ext)
+        val android: BaseExtension = project.extensions.getByType(BaseExtension::class.java)
+        forEachVariant(android) { variant ->
 
-                /**
-                 * 排序越靠后，优先级越高
-                 */
-                val flavors = mutableListOf<String>().run {
-                    it.productFlavors.toMutableList().also { productFlavors ->
-                        productFlavors.reverse()
-                        productFlavors.forEach { productFlavor ->
-                            add(productFlavor.name)
-                        }
+            /**
+             * productFlavors 排序越靠前，优先级越高
+             */
+            val defaultPackage = debugFlavor(android, ext, variant)
+
+            /**
+             * 排序越靠后，优先级越高
+             */
+            val flavors = mutableListOf<String>().run {
+                variant.productFlavors.toMutableList().also { productFlavors ->
+                    productFlavors.reverse()
+                    productFlavors.forEach { productFlavor ->
+                        add(productFlavor.name)
                     }
-                    if (it.flavorName.isNotBlank()) {
-                        add(it.flavorName)
-                    }
-                    add(it.buildType.name)
-                    add(it.name)
-                    toList()
                 }
-                eachVariant(flavors, it)
-                val suffix = it.name.replaceFirstChar { name ->
-                    if (name.isLowerCase()) name.uppercase() else name.toString()
+                if (variant.flavorName.isNotBlank()) {
+                    add(variant.flavorName)
                 }
-                val parseJsonTask = project.tasks.registerTask(
-                    "configWeaverGenerate${
-                        suffix
-                    }Config",
-                    ConfigGenTask::class.java
-                )
-                with(parseJsonTask.get()) {
-                    sourceDirs.add(project.file("config/main"))
-                    sourceDirs.addAll(project.files(flavors.map { mergeName ->
-                        project.file("config/${mergeName}")
-                    }))
-                    outputDir.set(File("${project.getConfigWeaverSourceDir("json")}${it.name}${File.separator}"))
-                    debug = ext.debugLog
-                    packageName = defaultPackage
-                    createClassGenerateFunc = createClassGenerate
-                }
-
-
-                if (ext.debugLog) {
-                    println("mergeDirs = $flavors")
-                }
-
-                val generateDynamicTask = project.tasks.registerTask(
-                    "configWeaverGenerate${suffix}CustomConfig",
-                    ConfigDynamicGenerateTask::class.java,
-                )
-                generateDynamicTask.get().apply {
-                    nodeList =
-                        ext.customObject.fold(mutableMapOf()) { acc, dynamicObject ->
-                            val node = dynamicObject.getObjectNode(flavors)
-                            if (node != null) {
-                                acc[dynamicObject.name] = node
-                            }
-                            acc
-                        }
-
-                    packageName = defaultPackage
-                    outputDir.set(File("${project.getConfigWeaverSourceDir("groovy")}${it.name}${File.separator}"))
-                    createClassGenerateFunc = createClassGenerate
-                }
-                it.registerJavaGeneratingTask(
-                    generateDynamicTask.get(),
-                    generateDynamicTask.get().outputDir.get().asFile
-                )
-                it.registerJavaGeneratingTask(
-                    parseJsonTask.get(),
-                    parseJsonTask.get().outputDir.get().asFile
-                )
+                add(variant.buildType.name)
+                add(variant.name)
+                toList()
             }
+            eachVariant(flavors, variant)
+            val suffix = variant.name.replaceFirstChar { name ->
+                if (name.isLowerCase()) name.uppercase() else name.toString()
+            }
+            val parseJsonTask = project.tasks.registerTask("configWeaverGenerate${
+                suffix
+            }Config",
+                ConfigGenTask::class.java,
+                action = object : TaskConfigAction<ConfigGenTask> {
+                    override fun configure(task: ConfigGenTask) {
+                        println("configure task:${task}")
+                        with(task) {
+                            sourceDirs.add(project.file("config/main"))
+                            sourceDirs.addAll(project.files(flavors.map { mergeName ->
+                                project.file("config/${mergeName}")
+                            }))
+                            outputDir.set(project.getConfigWeaverSourceDir(variant, "json"))
+                            debug = ext.debugLog
+                            packageName = defaultPackage
+                            createClassGenerateFunc = createClassGenerate
+                        }
+                    }
+                })
+
+
+            if (ext.debugLog) {
+                println("mergeDirs = $flavors")
+            }
+
+            val generateDynamicTask =
+                project.tasks.registerTask("configWeaverGenerate${suffix}CustomConfig",
+                    ConfigDynamicGenerateTask::class.java,
+                    action = object : TaskConfigAction<ConfigDynamicGenerateTask> {
+                        override fun configure(task: ConfigDynamicGenerateTask) {
+                            with(task) {
+                                nodeList =
+                                    ext.customObject.fold(mutableMapOf()) { acc, dynamicObject ->
+                                        val node = dynamicObject.getObjectNode(flavors)
+                                        if (node != null) {
+                                            acc[dynamicObject.name] = node
+                                        }
+                                        acc
+                                    }
+                                packageName = defaultPackage
+                                outputDir.set(project.getConfigWeaverSourceDir(variant, "groovy"))
+                                createClassGenerateFunc = createClassGenerate
+                            }
+                        }
+
+                    })
+            variant.registerJavaGeneratingTask(
+                generateDynamicTask.get(), generateDynamicTask.get().outputDir.get().asFile
+            )
+            variant.registerJavaGeneratingTask(
+                parseJsonTask.get(), parseJsonTask.get().outputDir.get().asFile
+            )
         }
+
     }
 
     private fun debugFlavor(
-        android: BaseExtension,
-        ext: BaseConfigWeaverExtension,
-        it: BaseVariant
+        android: BaseExtension, ext: BaseConfigWeaverExtension, it: BaseVariant
     ): String {
         /**
          * productFlavors 排序越靠前，优先级越高
@@ -135,8 +136,7 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
 
     @Suppress("DEPRECATION")
     private fun forEachVariant(
-        extension: BaseExtension,
-        action: (BaseVariant) -> Unit
+        extension: BaseExtension, action: (BaseVariant) -> Unit
     ) {
         when (extension) {
             is AppExtension -> extension.applicationVariants.all(action)
@@ -155,13 +155,13 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
      * @param flavor List<String> 当前变体的flavor buildType 组合 越靠后优先级越高
      * @param variant BaseVariant
      */
-    protected open fun eachVariant(flavor:List<String>, variant: BaseVariant){}
+    protected open fun eachVariant(flavor: List<String>, variant: BaseVariant) {}
 
     /**
      * 应用扩展属性 子类可强转为自己的扩展类
      * @param extension BaseConfigWeaverExtension
      */
-    protected open fun applyExtension(extension: BaseConfigWeaverExtension){}
+    protected open fun applyExtension(extension: BaseConfigWeaverExtension) {}
 
     /**
      * 子类重新该方法，返回自己的生成实现类
@@ -173,12 +173,8 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
     /**
      * 子类重新该方法，返回自己的扩展类
      */
-    open val extensionClass:Class<*>
+    open val extensionClass: Class<*>
         get() = BaseConfigWeaverExtension::class.java
-
-
-
-
 
 
 }

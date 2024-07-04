@@ -9,8 +9,8 @@ buildscript {
 
     }
     dependencies {
-        classpath(libs.codeGen.java)
-//        classpath(libs.codeGen.kotlin)
+//        classpath(libs.codeGen.java)
+        classpath(libs.codeGen.kotlin)
     }
 
 }
@@ -21,15 +21,10 @@ plugins {
     alias(libs.plugins.kotlinAndroid) apply false
     alias(libs.plugins.mavenPublish) apply false
     alias(libs.plugins.org.jetbrains.kotlin.jvm) apply false
-//    alias(libs.plugins.config.merge) apply false
-
 }
 
 subprojects {
-    println(name)
-
     afterEvaluate {
-
         if (plugins.hasPlugin("java-gradle-plugin")) {
             apply(plugin = libs.plugins.mavenPublish.get().pluginId)
             val depProjects = listOf(project(":config-core"))
@@ -66,7 +61,6 @@ subprojects {
             }
 
             apply(plugin = "maven-publish")
-            println("has")
             dependencies {
                 "implementation"(libs.bundles.codeGenCore)
                 "compileOnly"(libs.bundles.codeGenCompile)
@@ -102,14 +96,6 @@ subprojects {
                             url = uri("${rootDir.absolutePath}/localRepo")
                         }
                     }
-                }
-
-            }
-
-            plugins.withId(libs.plugins.mavenPublish.get().pluginId) {
-                val publishingExtension = extensions.getByType(PublishingExtension::class.java)
-                configure<MavenPublishBaseExtension> {
-
                 }
 
             }

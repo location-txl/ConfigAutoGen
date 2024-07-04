@@ -98,7 +98,7 @@ class KotlinClassGenerate(
     }
 
 
-
+    @Suppress("UNUSED_PARAMETER")
     private fun getDataTypeDefValue(dataType: DataType) = "null"
 
     private fun createNewInstanceParam(
@@ -242,7 +242,9 @@ class KotlinClassGenerate(
                 .beginControlFlow("lazy")
                 .addStatement(CodeBlock.builder().add("listOf(")
                     .also {
-                        //TODO 这里mapNotNull 一级下方 else
+
+
+                    //TODO 这里mapNotNull 一级下方 else
                         it.add(list.mapNotNull { item -> item?.value }.joinToCode { item ->
                             when (type) {
                                 ValueType.STRING -> CodeBlock.of("%S", item)
@@ -299,4 +301,14 @@ class KotlinClassGenerate(
 private fun ValueType.asTypeName(): TypeName = when (type) {
     String::class.java -> STRING
     else -> type.asTypeName()
+}
+
+
+public fun <T> Collection<T>.joinToCode(
+    separator: CharSequence = ", ",
+    prefix: CharSequence = "",
+    suffix: CharSequence = "",
+    transform: (T) -> CodeBlock,
+): CodeBlock {
+    return map(transform).joinToCode(separator, prefix, suffix)
 }
