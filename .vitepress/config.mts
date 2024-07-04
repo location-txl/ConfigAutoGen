@@ -47,7 +47,7 @@ export default defineConfig({
           text: 'json配置',
           items: [
             { text: '合并规则', link: '/guide/json/merge_rule' },
-            { text: '快速开始', link: '/guide/intro/quick_start' },
+            { text: '生成规则', link: '/guide/json/generate_rule' },
           ]
         }
       ]
