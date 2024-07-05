@@ -80,8 +80,13 @@ class JavaClassGenerate(
                 controlFlow("if($fieldName == null)") {
                     controlFlow("synchronized(${rootClassName}.class)") {
                         controlFlow("if($fieldName == null)") {
-                            addStatement("$fieldName = new \$T<>()", ArrayList::class.java)
-                            listNode.mapNotNull { it as? Node.ObjectNode }.forEach {
+                            val objList = listNode.mapNotNull { it as? Node.ObjectNode }
+                            addStatement(
+                                "$fieldName = new \$T<>(\$L)",
+                                ArrayList::class.java,
+                                objList.size
+                            )
+                            objList.forEach {
                                 addComment("value:$it")
 
                                 val codeBlockBuilder = CodeBlock.builder()
@@ -183,15 +188,19 @@ class JavaClassGenerate(
 
             codeBlockList.add(if (dataType.isList) {
                 val tmpFieldName = "${k}List_${Random.nextInt(1000)}"
-                methodSpecBuilder.addStatement(
-                    "\$T $tmpFieldName = new \$T<>()", ParameterizedTypeName.get(
-                        ClassName.get(List::class.java), getDataTypeTypeName(dataType)
-                    ), ArrayList::class.java
-                )
                 val childArray =
-                    value as? Node.ListNode ?: error("k:${dataType.rawKey} value is not JSONArray")
+                    (value as? Node.ListNode)?.filterNotNull()
+                        ?: error("k:${dataType.rawKey} value is not JSONArray")
+                methodSpecBuilder.addStatement(
+                    "\$T $tmpFieldName = new \$T<>(\$L)",
+                    ParameterizedTypeName.get(
+                        ClassName.get(List::class.java), getDataTypeTypeName(dataType)
+                    ),
+                    ArrayList::class.java, childArray.size,
+                )
 
-                childArray.filterNotNull().forEach { childItem ->
+
+                childArray.forEach { childItem ->
                     val builder = CodeBlock.builder()
                     builder.add("$tmpFieldName.add(")
                     builder.add(createParam(dataType, childItem, methodSpecBuilder))
@@ -281,7 +290,11 @@ class JavaClassGenerate(
             controlFlow("if(${field.name} == null)") {
                 controlFlow("synchronized(${rootClassName}.class)") {
                     controlFlow("if(${field.name} == null)") {
-                        addStatement("${field.name} = new \$T<>()", ArrayList::class.java)
+                        addStatement(
+                            "${field.name} = new \$T<>(\$L)",
+                            ArrayList::class.java,
+                            list.size
+                        )
                         list.forEach {
                             addComment("value:$it")
                             when (it!!.valueType) {
