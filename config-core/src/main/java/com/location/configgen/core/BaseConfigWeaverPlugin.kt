@@ -1,6 +1,7 @@
 package com.location.configgen.core
 
 import com.android.build.gradle.AppExtension
+import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.api.BaseVariant
@@ -21,6 +22,10 @@ import java.io.File
  * time：2024/6/6 17:25
  * description：
  */
+const val MIN_AGP_VERSION = "4.2.2"
+const val MIN_KOTLIN_VERSION = "1.8.0"
+const val MIN_GRADLE_VERSION = "6.7.1"
+
 abstract class BaseConfigWeaverPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
@@ -30,6 +35,17 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
 
         applyExtension(ext)
         val android: BaseExtension = project.extensions.getByType(BaseExtension::class.java)
+        val agpVersion = project.rootProject.buildscript.configurations.getByName("classpath")
+            .dependencies.all {
+                println("classpath = $it")
+            }
+        println("AGP version: $agpVersion")
+
+        val gradleVersion = project.gradle.gradleVersion
+        println("gradleVersion = $gradleVersion")
+        if (gradleVersion < MIN_GRADLE_VERSION) {
+            throw GradleException("gradle version must be $MIN_GRADLE_VERSION or higher")
+        }
         forEachVariant(android) { variant ->
 
             /**

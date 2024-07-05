@@ -25,6 +25,6 @@ class MainActivity : AppCompatActivity() {
             NetworkConfig.Timeout.write
         )
         FeatureConfig.enableLog
-        SampleConfig.testList
+//        SampleConfig.testList
     }
 }
