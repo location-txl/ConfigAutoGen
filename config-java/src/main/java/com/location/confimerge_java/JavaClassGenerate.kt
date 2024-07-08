@@ -7,6 +7,7 @@ import com.location.configgen.core.codeGen.methodName
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
 import com.location.configgen.defJavaOptions
+import com.squareup.javapoet.AnnotationSpec
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
@@ -15,9 +16,9 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
-import org.gradle.api.Project
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.io.File
+import java.util.Collections
 import javax.lang.model.element.Modifier
 import kotlin.random.Random
 
@@ -76,13 +77,24 @@ class JavaClassGenerate(
             })
             addMethod(methodSpec(key.methodName) {
                 addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                returns(fieldType)
+                returns(
+                    fieldType.annotated(
+                        AnnotationSpec.builder(
+                            ClassName.get(
+                                defJavaOptions.nullSafeAnnotation.packageName,
+                                defJavaOptions.nullSafeAnnotation.notNull
+                            )
+                        ).build()
+                    )
+                )
                 controlFlow("if($fieldName == null)") {
                     controlFlow("synchronized(${rootClassName}.class)") {
                         controlFlow("if($fieldName == null)") {
                             val objList = listNode.mapNotNull { it as? Node.ObjectNode }
+                            val tmpFieldName = fieldName.listRandomName
                             addStatement(
-                                "$fieldName = new \$T<>(\$L)",
+                                "\$T $tmpFieldName = new \$T<>(\$L)",
+                                fieldType,
                                 ArrayList::class.java,
                                 objList.size
                             )
@@ -92,12 +104,17 @@ class JavaClassGenerate(
                                 val codeBlockBuilder = CodeBlock.builder()
                                 addStatement(
                                     codeBlockBuilder.add(
-                                        "$fieldName.add(new \$T(",
+                                        "$tmpFieldName.add(new \$T(",
                                         ClassName.get(objType.pkgName, objType.className)
                                     ).add(createNewInstanceParam(it, typeMap, this)).add("))")
                                         .build()
                                 )
                             }
+                            addStatement(
+                                "$fieldName = \$T.unmodifiableList($tmpFieldName)", ClassName.get(
+                                    Collections::class.java
+                                )
+                            )
                         }
                     }
                 }
@@ -129,6 +146,9 @@ class JavaClassGenerate(
             is DataType.UnknownType -> "null"
         }
     }
+
+    private val String.listRandomName: String
+        get() = "${this}_${Random.nextInt(1000)}"
 
     private fun createNewInstanceParam(
         objNode: Node.ObjectNode,
@@ -187,7 +207,7 @@ class JavaClassGenerate(
 
 
             codeBlockList.add(if (dataType.isList) {
-                val tmpFieldName = "${k}List_${Random.nextInt(1000)}"
+                val tmpFieldName = k.listRandomName
                 val childArray =
                     (value as? Node.ListNode)?.filterNotNull()
                         ?: error("k:${dataType.rawKey} value is not JSONArray")
@@ -207,7 +227,10 @@ class JavaClassGenerate(
                     builder.add(")")
                     methodSpecBuilder.addStatement(builder.build())
                 }
-                CodeBlock.of(tmpFieldName)
+                CodeBlock.of(
+                    "\$T.unmodifiableList($tmpFieldName)",
+                    ClassName.get(Collections::class.java)
+                )
             } else {
                 createParam(dataType, value, methodSpecBuilder)
             })
@@ -234,11 +257,24 @@ class JavaClassGenerate(
 
                 addField(fieldSpec(key, typeName) {
                     addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    if (defJavaOptions.nullSafe && ((value as? DataType.BasisType)?.type.let { t -> t == ValueType.STRING || t == null })) {
-                        if(value.canNull){
-                            addAnnotation(ClassName.get(defJavaOptions.nullSafeAnnotation.packageName, defJavaOptions.nullSafeAnnotation.nullable))
-                        }else{
-                            addAnnotation(ClassName.get(defJavaOptions.nullSafeAnnotation.packageName, defJavaOptions.nullSafeAnnotation.notNull))
+                    if (
+                        defJavaOptions.nullSafe
+                        && (value.isList || (value as? DataType.BasisType)?.type.let { t -> t == ValueType.STRING || t == null })
+                    ) {
+                        if (value.canNull) {
+                            addAnnotation(
+                                ClassName.get(
+                                    defJavaOptions.nullSafeAnnotation.packageName,
+                                    defJavaOptions.nullSafeAnnotation.nullable
+                                )
+                            )
+                        } else {
+                            addAnnotation(
+                                ClassName.get(
+                                    defJavaOptions.nullSafeAnnotation.packageName,
+                                    defJavaOptions.nullSafeAnnotation.notNull
+                                )
+                            )
                         }
                     }
 
@@ -284,14 +320,23 @@ class JavaClassGenerate(
         ) {
             addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             returns(
-                field.type
+                field.type.annotated(
+                    AnnotationSpec.builder(
+                        ClassName.get(
+                            defJavaOptions.nullSafeAnnotation.packageName,
+                            defJavaOptions.nullSafeAnnotation.notNull
+                        )
+                    ).build()
+                )
             )
 
             controlFlow("if(${field.name} == null)") {
                 controlFlow("synchronized(${rootClassName}.class)") {
                     controlFlow("if(${field.name} == null)") {
+                        val tempKey = "tmpList"
                         addStatement(
-                            "${field.name} = new \$T<>(\$L)",
+                            "\$T $tempKey = new \$T<>(\$L)",
+                            field.type,
                             ArrayList::class.java,
                             list.size
                         )
@@ -299,23 +344,28 @@ class JavaClassGenerate(
                             addComment("value:$it")
                             when (it!!.valueType) {
                                 ValueType.STRING -> addStatement(
-                                    "${field.name}.add(\$S)", it
+                                    "${tempKey}.add(\$S)", it
                                 )
 
                                 ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> addStatement(
-                                    "${field.name}.add(\$L)", it
+                                    "${tempKey}.add(\$L)", it
                                 )
 
                                 ValueType.LONG -> addStatement(
-                                    "${field.name}.add(\$L)", "${it}L"
+                                    "${tempKey}.add(\$L)", "${it}L"
                                 )
 
                                 ValueType.FLOAT -> addStatement(
-                                    "${field.name}.add(\$L)", "${it}f"
+                                    "${tempKey}.add(\$L)", "${it}f"
                                 )
                             }
 
                         }
+                        addStatement(
+                            "${field.name} = \$T.unmodifiableList($tempKey)", ClassName.get(
+                                Collections::class.java
+                            )
+                        )
                     }
                 }
             }
