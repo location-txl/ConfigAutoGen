@@ -238,6 +238,9 @@ class JavaClassGenerate(
         return CodeBlock.join(codeBlockList, ", ")
     }
 
+    private val DataType.canNullSafe: Boolean
+        get() = this.isList || (this as? DataType.BasisType)?.type.let { t -> t == ValueType.STRING || t == null }
+
 
     override fun addProperty(classSpec: JavaClassSpec, propertyMap: Map<String, DataType>) {
         with(classSpec.classType) {
@@ -259,7 +262,7 @@ class JavaClassGenerate(
                     addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     if (
                         defJavaOptions.nullSafe
-                        && (value.isList || (value as? DataType.BasisType)?.type.let { t -> t == ValueType.STRING || t == null })
+                        && value.canNullSafe
                     ) {
                         if (value.canNull) {
                             addAnnotation(
@@ -378,7 +381,8 @@ class JavaClassGenerate(
 
         val fieldSpec = FieldSpec.builder(
             v.valueType.type, key.fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL
-        ).addJavadoc("key:$key value:$v")
+        )
+            .addJavadoc("key:$key value:$v")
         when (v.valueType) {
             ValueType.STRING -> fieldSpec.initializer("\$S", v)
             ValueType.INT, ValueType.BOOLEAN, ValueType.DOUBLE -> fieldSpec.initializer("\$L", v)
@@ -396,6 +400,14 @@ class JavaClassGenerate(
             Modifier.STATIC,
             Modifier.FINAL
         ).addJavadoc("key:$key value:null").initializer("null")
+        if (defJavaOptions.nullSafe) {
+            fieldSpec.addAnnotation(
+                ClassName.get(
+                    defJavaOptions.nullSafeAnnotation.packageName,
+                    defJavaOptions.nullSafeAnnotation.nullable
+                )
+            )
+        }
         typeSpecBuilder.classType.addField(fieldSpec.build())
     }
 }
