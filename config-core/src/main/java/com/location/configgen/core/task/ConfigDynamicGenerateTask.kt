@@ -1,7 +1,6 @@
 package com.location.configgen.core.task
 
 import com.location.configgen.core.CreateClassGenerateFunc
-import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.codeGen.className
 import com.location.configgen.core.datanode.Node
 import org.gradle.api.DefaultTask
@@ -34,6 +33,7 @@ open class ConfigDynamicGenerateTask: DefaultTask() {
         outputDir.get().asFile.deleteRecursively()
         nodeList.forEach { (k,v) ->
             createClassGenerateFunc?.invoke(
+                project,
                 packageName,
                 outputDir.asFile.get().absolutePath,
                 v,

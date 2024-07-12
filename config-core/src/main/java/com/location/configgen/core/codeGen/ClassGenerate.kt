@@ -3,6 +3,7 @@ package com.location.configgen.core.codeGen
 import com.location.configgen.core.config.GITHUB_URL
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
+import org.gradle.api.Project
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.util.LinkedHashMap
 import java.util.Locale
@@ -14,6 +15,7 @@ import java.util.Locale
  * description：
  */
 abstract class ClassGenerate<T : ClassSpec<T>>(
+    protected val project: Project,
     protected val rootPackageName: String,
     protected val outputDir: String,
     private val rootNode: Node.ObjectNode,

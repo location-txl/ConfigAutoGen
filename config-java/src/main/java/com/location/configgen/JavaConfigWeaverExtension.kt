@@ -29,7 +29,7 @@ data class NullSafeAnnotation(
 
 data class JavaOptions(
     var nullSafe:Boolean,
-    var nullSafeAnnotation: NullSafeAnnotation = NullSafeAnnotation.ANDROIDX
+    var nullSafeAnnotation: NullSafeAnnotation = NullSafeAnnotation.ANDROIDX,
     )
 
 
@@ -37,4 +37,4 @@ data class JavaOptions(
  * 默认的java配置
  * @see [com.location.confimerge_java.JavaClassGenerate]
  */
-var defJavaOptions = JavaOptions(false)
+private val defJavaOptions = JavaOptions(false)

@@ -22,6 +22,7 @@ fun Project.getConfigWeaverSourceDir(variant: BaseVariant, key: String): Provide
 
 
 typealias CreateClassGenerateFunc = (
+    project: Project,
     rootPackageName: String,
     outputDir: String,
     rootNode: Node.ObjectNode,

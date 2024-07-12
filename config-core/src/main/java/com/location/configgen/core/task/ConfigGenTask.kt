@@ -73,6 +73,7 @@ abstract class ConfigGenTask : DefaultTask() {
         configSourceList.forEach {
             checkPropertyValid(it.configHeader.className, "config json file")
             createClassGenerateFunc?.invoke(
+                project,
                 packageName,
                 outputDir.asFile.get().absolutePath,
                 (jsonParser.parse(it.json) as? JSONObject)?.toNode()

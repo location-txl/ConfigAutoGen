@@ -1,12 +1,12 @@
 package com.location.confimerge_java
 
+import com.location.configgen.JavaConfigWeaverExtension
 import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.codeGen.fieldName
 import com.location.configgen.core.codeGen.methodName
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.ValueType
-import com.location.configgen.defJavaOptions
 import com.squareup.javapoet.AnnotationSpec
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
@@ -16,6 +16,7 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
+import org.gradle.api.Project
 import org.gradle.internal.impldep.org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.util.Collections
@@ -29,16 +30,19 @@ import kotlin.random.Random
  * description：
  */
 class JavaClassGenerate(
+    project: Project,
     packageName: String,
     outputDir: String,
     rootNode: Node.ObjectNode,
     className: String
 ) :
-    ClassGenerate<JavaClassSpec>(packageName, outputDir, rootNode, className) {
+    ClassGenerate<JavaClassSpec>(project, packageName, outputDir, rootNode, className) {
     companion object {
         @VisibleForTesting
         var inTest = false
     }
+
+    private val javaOption by lazy { project.extensions.getByType(JavaConfigWeaverExtension::class.java).javaOptions }
 
     override fun writeFile(fileComment: String, classSpec: JavaClassSpec) {
         val typeSpec = classSpec.build()
@@ -78,14 +82,18 @@ class JavaClassGenerate(
             addMethod(methodSpec(key.methodName) {
                 addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 returns(
-                    fieldType.annotated(
-                        AnnotationSpec.builder(
-                            ClassName.get(
-                                defJavaOptions.nullSafeAnnotation.packageName,
-                                defJavaOptions.nullSafeAnnotation.notNull
+                    fieldType.also {
+                        if (javaOption.nullSafe) {
+                            it.annotated(
+                                AnnotationSpec.builder(
+                                    ClassName.get(
+                                        javaOption.nullSafeAnnotation.packageName,
+                                        javaOption.nullSafeAnnotation.notNull
+                                    )
+                                ).build()
                             )
-                        ).build()
-                    )
+                        }
+                    }
                 )
                 controlFlow("if($fieldName == null)") {
                     controlFlow("synchronized(${rootClassName}.class)") {
@@ -261,21 +269,21 @@ class JavaClassGenerate(
                 addField(fieldSpec(key, typeName) {
                     addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     if (
-                        defJavaOptions.nullSafe
+                        javaOption.nullSafe
                         && value.canNullSafe
                     ) {
                         if (value.canNull) {
                             addAnnotation(
                                 ClassName.get(
-                                    defJavaOptions.nullSafeAnnotation.packageName,
-                                    defJavaOptions.nullSafeAnnotation.nullable
+                                    javaOption.nullSafeAnnotation.packageName,
+                                    javaOption.nullSafeAnnotation.nullable
                                 )
                             )
                         } else {
                             addAnnotation(
                                 ClassName.get(
-                                    defJavaOptions.nullSafeAnnotation.packageName,
-                                    defJavaOptions.nullSafeAnnotation.notNull
+                                    javaOption.nullSafeAnnotation.packageName,
+                                    javaOption.nullSafeAnnotation.notNull
                                 )
                             )
                         }
@@ -323,14 +331,18 @@ class JavaClassGenerate(
         ) {
             addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             returns(
-                field.type.annotated(
-                    AnnotationSpec.builder(
-                        ClassName.get(
-                            defJavaOptions.nullSafeAnnotation.packageName,
-                            defJavaOptions.nullSafeAnnotation.notNull
+                field.type.also {
+                    if (javaOption.nullSafe) {
+                        it.annotated(
+                            AnnotationSpec.builder(
+                                ClassName.get(
+                                    javaOption.nullSafeAnnotation.packageName,
+                                    javaOption.nullSafeAnnotation.notNull
+                                )
+                            ).build()
                         )
-                    ).build()
-                )
+                    }
+                }
             )
 
             controlFlow("if(${field.name} == null)") {
@@ -400,11 +412,11 @@ class JavaClassGenerate(
             Modifier.STATIC,
             Modifier.FINAL
         ).addJavadoc("key:$key value:null").initializer("null")
-        if (defJavaOptions.nullSafe) {
+        if (javaOption.nullSafe) {
             fieldSpec.addAnnotation(
                 ClassName.get(
-                    defJavaOptions.nullSafeAnnotation.packageName,
-                    defJavaOptions.nullSafeAnnotation.nullable
+                    javaOption.nullSafeAnnotation.packageName,
+                    javaOption.nullSafeAnnotation.nullable
                 )
             )
         }
