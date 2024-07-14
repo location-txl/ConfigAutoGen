@@ -39,18 +39,13 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
             .dependencies.all {
                 println("classpath = $it")
             }
-        println("AGP version: $agpVersion")
 
         val gradleVersion = project.gradle.gradleVersion
-        println("gradleVersion = $gradleVersion")
         if (gradleVersion < MIN_GRADLE_VERSION) {
             throw GradleException("gradle version must be $MIN_GRADLE_VERSION or higher")
         }
         forEachVariant(android) { variant ->
 
-            /**
-             * productFlavors 排序越靠前，优先级越高
-             */
             val defaultPackage = debugFlavor(android, ext, variant)
 
             /**
@@ -80,7 +75,6 @@ abstract class BaseConfigWeaverPlugin : Plugin<Project> {
                 ConfigGenTask::class.java,
                 action = object : TaskConfigAction<ConfigGenTask> {
                     override fun configure(task: ConfigGenTask) {
-                        println("configure task:${task}")
                         with(task) {
                             sourceDirs.add(project.file("config/main"))
                             sourceDirs.addAll(project.files(flavors.map { mergeName ->

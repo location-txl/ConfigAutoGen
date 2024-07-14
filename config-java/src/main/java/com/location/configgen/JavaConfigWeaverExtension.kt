@@ -16,21 +16,19 @@ open class JavaConfigWeaverExtension(project: Project) : BaseConfigWeaverExtensi
  * 为true后 会对所有可空不可空的字段添加nullSafe注解
  */
 data class NullSafeAnnotation(
-    val packageName:String,
-    val nullable:String,
-    val notNull:String
-){
-    companion object{
+    val packageName: String, val nullable: String, val notNull: String
+) {
+    companion object {
         @JvmStatic
-        val ANDROIDX = NullSafeAnnotation("androidx.annotation","Nullable","NonNull")
+        val ANDROIDX = NullSafeAnnotation("androidx.annotation", "Nullable", "NonNull")
     }
 }
 
 
 data class JavaOptions(
-    var nullSafe:Boolean,
+    var nullSafe: Boolean,
     var nullSafeAnnotation: NullSafeAnnotation = NullSafeAnnotation.ANDROIDX,
-    )
+)
 
 
 /**

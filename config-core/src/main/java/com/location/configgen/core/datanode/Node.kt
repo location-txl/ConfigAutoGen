@@ -80,7 +80,6 @@ private fun parseJsValue(
                 })
             }
             //TODO 检测里面的 item 都是一个类型 否则崩溃
-//            nodeList.filterNotNull()
             Node.ListNode(nodeList.toList(), v.toString())
         }
 

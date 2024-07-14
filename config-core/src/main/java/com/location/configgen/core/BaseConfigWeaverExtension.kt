@@ -23,12 +23,6 @@ open class BaseConfigWeaverExtension(project: Project) {
             }
         }
 
-
-    /**
-     * 是否开启debug日志
-     */
-    var debugLog = false
-
     /**
      * 添加自定义对象
      * @param action Action<NamedDomainObjectContainer<DynamicObject>>
@@ -36,4 +30,18 @@ open class BaseConfigWeaverExtension(project: Project) {
     fun customObject(action: Action<NamedDomainObjectContainer<DynamicObject>>) {
         action.execute(customObject)
     }
+
+    /**
+     * 是否开启debug日志
+     */
+    var debugLog = false
+
+    /**
+     * 是否完整扫描列表的所有项 默认为true 完整扫描可以创建出来list中包含的所有的元素
+     *
+     * 如果列表的每项Item中元素固定 则可以指定为false 提升编译性能 经过测试 对编译性能影响很小
+     */
+    var fullScanList = true
+
+
 }
