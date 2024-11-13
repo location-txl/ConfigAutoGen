@@ -3,8 +3,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-    id("config-weaver-kotlin")
-//    id("config-weaver-java")
+//    id("config-weaver-kotlin")
+    id("config-weaver-java")
 }
 
 android {
@@ -63,7 +63,11 @@ android {
         }
     }
 }
-//configWeaver {
+configWeaver {
+
+    java {
+        nullSafe = false
+    }
 //    debugLog = true
 //
 //    customObject {
@@ -176,7 +180,7 @@ android {
 //            }
 //        }
 //    }
-//}
+}
 
 
 

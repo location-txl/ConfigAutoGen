@@ -1,5 +1,6 @@
 package com.location.confimerge_java
 
+import com.google.gson.JsonObject
 import com.location.configgen.JavaConfigWeaverExtension
 import com.location.configgen.core.codeGen.DataType
 import com.location.configgen.core.codeGen.ClassGenerate

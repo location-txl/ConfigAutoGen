@@ -10,7 +10,4 @@ class ConfigWeaverKotlinPlugin : BaseConfigWeaverPlugin() {
             KotlinClassGenerate(project, rootPackageName, outputDir, rootNode, rootClassName)
         }
 
-
-    fun a() {
-    }
 }

@@ -1,5 +1,6 @@
 package com.location.confimerge_java
 
+import com.google.gson.Gson
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.MethodSpec
@@ -53,3 +54,22 @@ fun parameterSpec(
     name: String,
     body: ParameterSpec.Builder.() -> Unit = {}
 ): ParameterSpec = ParameterSpec.builder(type, name).apply(body).build()
+
+
+fun main() {
+    println("1233")
+    val gson = Gson()
+    val json = """
+        {
+        "name":"123",
+        "info":{
+           "id":1,
+           "u_id":"1321"
+        },
+        "age":null
+        }
+    """.trimIndent()
+
+    val fromJson = gson.fromJson(json, Map::class.java)
+    println("fromJson:$fromJson")
+}

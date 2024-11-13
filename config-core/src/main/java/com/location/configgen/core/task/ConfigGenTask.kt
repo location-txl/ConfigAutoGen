@@ -1,17 +1,15 @@
 package com.location.configgen.core.task
 
+import com.google.gson.Gson
 import com.location.configgen.core.CreateClassGenerateFunc
-import com.location.configgen.core.codeGen.ClassGenerate
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
 import com.location.configgen.core.config.checkPropertyValid
 import com.location.configgen.core.config.readJsonFile
-import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.toNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Console
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
@@ -51,6 +49,7 @@ abstract class ConfigGenTask : DefaultTask() {
     @get:Internal
     var createClassGenerateFunc:CreateClassGenerateFunc? = null
 
+    private val gson by lazy { Gson() }
 
 
     @TaskAction
@@ -68,6 +67,8 @@ abstract class ConfigGenTask : DefaultTask() {
 
         val configSourceList = mergeFiles()
         outputDir.get().asFile.deleteRecursively()
+
+        val gson = Gson()
         val jsonParser = JSONParser()
 
         configSourceList.forEach {
@@ -106,8 +107,8 @@ abstract class ConfigGenTask : DefaultTask() {
             }
         }
         val configSourcesList = mutableListOf<ConfigSource>()
-        fileMaps.forEach { (_, u) ->
-            val mergeJson = mergeJson(u)
+        fileMaps.forEach { (_, pathList) ->
+            val mergeJson = mergeJson(pathList)
             if (mergeJson != null) {
                 val configHeader = ConfigHeader(
                     mergeJson.fileHeader.className,
@@ -125,9 +126,10 @@ abstract class ConfigGenTask : DefaultTask() {
     }
 
 
-    private fun mergeJson(listFiles: List<String>): JsonData? {
+    private fun mergeJson(pathList: List<String>): JsonData? {
+        val gson = Gson()
         val jsonParser = JSONParser()
-        return listFiles.fold(null) { oldData: JsonData?, file: String ->
+        return pathList.fold(null) { oldData: JsonData?, file: String ->
             val newData = readJsonFile(file)
             if (oldData == null) {
                 newData
@@ -183,4 +185,9 @@ abstract class ConfigGenTask : DefaultTask() {
     )
 
 
+}
+
+fun main() {
+    val a = JSONParser()
+    println("123")
 }

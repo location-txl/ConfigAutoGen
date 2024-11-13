@@ -2,5 +2,26 @@
   "enable_log": false,
   // 是否显示支付页面
   "show_pay_page": true,
-  "test": 1
+  "test": 1,
+  "bAray": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    1,
+    2,
+    3
+  ],
+  "obJArray": [
+    {
+      "name": "a",
+      "ids": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "test_a": null
 }
