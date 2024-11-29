@@ -68,8 +68,8 @@ abstract class ConfigGenTask : DefaultTask() {
         val configSourceList = mergeFiles()
         outputDir.get().asFile.deleteRecursively()
 
-        val gson = Gson()
         val jsonParser = JSONParser()
+        val gson = Gson()
 
         configSourceList.forEach {
             checkPropertyValid(it.configHeader.className, "config json file")
@@ -109,18 +109,15 @@ abstract class ConfigGenTask : DefaultTask() {
         val configSourcesList = mutableListOf<ConfigSource>()
         fileMaps.forEach { (_, pathList) ->
             val mergeJson = mergeJson(pathList)
-            if (mergeJson != null) {
-                val configHeader = ConfigHeader(
-                    mergeJson.fileHeader.className,
-                    mergeJson.fileHeader.classNameAutoGenerate
-                )
-                if(debug){
-                    println("mergeJson = ${mergeJson.jsonStr}")
-                }
-                configSourcesList.add(ConfigSource(mergeJson.jsonStr, configHeader))
-            }else{
-                throw IllegalArgumentException("merge json fail")
+            require(mergeJson != null)
+            val configHeader = ConfigHeader(
+                mergeJson.fileHeader.className,
+                mergeJson.fileHeader.classNameAutoGenerate
+            )
+            if (debug) {
+                println("mergeJson = ${mergeJson.jsonStr}")
             }
+            configSourcesList.add(ConfigSource(mergeJson.jsonStr, configHeader))
         }
         return configSourcesList.toList()
     }

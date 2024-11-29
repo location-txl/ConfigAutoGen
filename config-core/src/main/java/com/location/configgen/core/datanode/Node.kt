@@ -16,6 +16,10 @@ sealed class Node(open val docs: String) {
      data class ObjectNode(
         val property: Map<String, Node?>, override val docs: String,
     ) : Node(docs), Map<String, Node?> by property, Serializable {
+         companion object {
+             private const val serialVersionUID: Long = 1L
+         }
+
         override fun toString(): String {
             return property.toString()
         }
@@ -23,6 +27,9 @@ sealed class Node(open val docs: String) {
 
     data class ListNode(val list: List<Node?>, override val docs: String) : Node(docs),
         List<Node?> by list,Serializable {
+        companion object {
+            private const val serialVersionUID: Long = 1L
+        }
         override fun toString(): String {
             return list.toString()
         }
@@ -32,6 +39,9 @@ sealed class Node(open val docs: String) {
         override val docs: String,
         val type: ValueType? = null,
     ) : Node(docs),Serializable {
+        companion object {
+            private const val serialVersionUID: Long = 1L
+        }
 
         val valueType: ValueType
             get() = when (this.value) {
