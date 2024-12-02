@@ -8,5 +8,4 @@ package com.location.configgen.core.config
  */
 data class ConfigHeader(
     val className: String,
-    val classNameAutoGenerate: Boolean,
 )

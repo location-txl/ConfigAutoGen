@@ -2,10 +2,11 @@ package com.location.configgen.core.task
 
 import com.google.gson.Gson
 import com.location.configgen.core.CreateClassGenerateFunc
+import com.location.configgen.core.codeGen.className
 import com.location.configgen.core.config.ConfigHeader
 import com.location.configgen.core.config.JsonData
 import com.location.configgen.core.config.checkPropertyValid
-import com.location.configgen.core.config.readJsonFile
+import com.location.configgen.core.config.defaultParseConfig
 import com.location.configgen.core.datanode.toNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -49,8 +50,6 @@ abstract class ConfigGenTask : DefaultTask() {
     @get:Internal
     var createClassGenerateFunc:CreateClassGenerateFunc? = null
 
-    private val gson by lazy { Gson() }
-
 
     @TaskAction
     fun genCode(){
@@ -68,8 +67,6 @@ abstract class ConfigGenTask : DefaultTask() {
         val configSourceList = mergeFiles()
         outputDir.get().asFile.deleteRecursively()
 
-        val jsonParser = JSONParser()
-        val gson = Gson()
 
         configSourceList.forEach {
             checkPropertyValid(it.configHeader.className, "config json file")
@@ -77,8 +74,7 @@ abstract class ConfigGenTask : DefaultTask() {
                 project,
                 packageName,
                 outputDir.asFile.get().absolutePath,
-                (jsonParser.parse(it.json) as? JSONObject)?.toNode()
-                    ?: error("json config only support first element is JsObj"),
+                defaultParseConfig.parseConfig(it.json),
                 it.configHeader.className
             )?.create()
         }
@@ -93,7 +89,9 @@ abstract class ConfigGenTask : DefaultTask() {
         val fileMaps = mutableMapOf<String, MutableList<String>>()
         sourceDirs.get().filter { it.isDirectory }.forEach { dir ->
             println("dir = ${dir.listFiles()}")
-            dir.listFiles { _, s -> s.endsWith(".json") }?.forEach { file ->
+            dir.listFiles { _, fileName ->
+                defaultParseConfig.isValidFile(fileName)
+            }?.forEach { file ->
                 fileMaps.getOrPut(file.nameWithoutExtension) { mutableListOf() }
                     .add(file.absolutePath)
             }
@@ -108,73 +106,22 @@ abstract class ConfigGenTask : DefaultTask() {
         }
         val configSourcesList = mutableListOf<ConfigSource>()
         fileMaps.forEach { (_, pathList) ->
-            val mergeJson = mergeJson(pathList)
-            require(mergeJson != null)
+            val config = defaultParseConfig.mergeConfig(pathList)
+
             val configHeader = ConfigHeader(
-                mergeJson.fileHeader.className,
-                mergeJson.fileHeader.classNameAutoGenerate
+                config.attribute.className ?: File(pathList.first()).nameWithoutExtension.className
             )
             if (debug) {
-                println("mergeJson = ${mergeJson.jsonStr}")
+                println("mergeJson = ${config.content}")
             }
-            configSourcesList.add(ConfigSource(mergeJson.jsonStr, configHeader))
+            configSourcesList.add(ConfigSource(config.content, configHeader))
         }
         return configSourcesList.toList()
     }
 
 
-    private fun mergeJson(pathList: List<String>): JsonData? {
-        val gson = Gson()
-        val jsonParser = JSONParser()
-        return pathList.fold(null) { oldData: JsonData?, file: String ->
-            val newData = readJsonFile(file)
-            if (oldData == null) {
-                newData
-            } else {
-                val oldObj = jsonParser.parse(oldData.jsonStr)
-                val newObj = jsonParser.parse(newData.jsonStr)
-                if (oldObj.javaClass.simpleName != newObj.javaClass.simpleName) {
-                    throw IllegalArgumentException("json type not match s1 path:${file} type:${oldObj.javaClass.simpleName} s2 path:${oldData.jsonStr} type:${newObj.javaClass.simpleName}")
-                }
-                if (oldObj is JSONObject) {
-                    mergeJsObj(oldObj, newObj as JSONObject)
-                } else if (oldObj is JSONArray) {
-                    mergeJsArray(oldObj, newObj as JSONArray)
-                }
-                oldData.copy(
-                    fileHeader = if (newData.fileHeader.classNameAutoGenerate.not()) {
-                        oldData.fileHeader
-                    } else {
-                        newData.fileHeader
-                    }, jsonStr = oldObj.toString()
-                )
-            }
-        }
-    }
 
-    private fun mergeJsObj(source:JSONObject, merge:JSONObject){
-        source.forEach{k,v ->
-            if(v is JSONObject){
-                val mV = merge.remove(k) ?: return@forEach
-                if((mV is JSONObject).not()){
-                    throw IllegalArgumentException("merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}")
-                }
-                mergeJsObj(v, mV as JSONObject)
-            }else if(v is JSONArray){
-                val mV = merge.remove(k) ?: return@forEach
-                if((mV is JSONArray).not()){
-                    throw IllegalArgumentException("merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}")
-                }
-                mergeJsArray(v, mV as JSONArray)
-            }
-        }
-        source.putAll(merge)
-    }
 
-    private fun mergeJsArray(source: JSONArray, mergeValue: JSONArray) {
-        source.clear()
-        source.addAll(mergeValue)
-    }
 
 
     data class ConfigSource(
@@ -184,7 +131,3 @@ abstract class ConfigGenTask : DefaultTask() {
 
 }
 
-fun main() {
-    val a = JSONParser()
-    println("123")
-}

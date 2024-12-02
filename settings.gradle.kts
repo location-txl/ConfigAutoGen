@@ -25,5 +25,5 @@ dependencyResolutionManagement {
     }
 }
 
-//include(":sample:gradle-kt")
+include(":sample:gradle-kt")
 //include(":sample:gradle-groovy")

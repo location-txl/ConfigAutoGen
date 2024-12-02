@@ -3,8 +3,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
-//    id("config-weaver-kotlin")
-    id("config-weaver-java")
+    id("config-weaver-kotlin")
+//    id("config-weaver-java")
 }
 
 android {
@@ -65,49 +65,49 @@ android {
 }
 configWeaver {
 
-    java {
-        nullSafe = false
-    }
+//    java {
+//        nullSafe = false
+//    }
 //    debugLog = true
 //
-//    customObject {
+    customObject {
 //
-//        create("HostConfig2"){
-//            addProperty("url", "http://localhost:3000")
-//            addListProperty("list"){
-//                add(1)
-//                add(2)
-//                add(3)
-//                add(4)
-//                add(5)
-//            }
-//            addListObject("apis"){
-//                add {
-//                    addProperty("path", "getName")
-//                    addProperty("name", "1")
-//                    addProperty("id", 1)
-//                }
-//                add {
-//                    addProperty("path", "getAge")
-//                    addProperty("name", "2")
-//                    addProperty("id", 1719734598204)
-//                }
-//                add {
-//                    addProperty("path", "getAddress")
-//                    addProperty("name", "3")
-//                }
-//            }
-//            addObject("timeout"){
-//                addProperty("read", 10000)
-//                addProperty("connect", 1)
-//            }
-//
-//            withFlavor("free"){
-//                addProperty("url", "www.debug.com")
-//                addProperty("id", 1)
-//            }
-//
-//        }
+        create("HostConfig2") {
+            addProperty("url", "http://localhost:3000")
+            addListProperty("list") {
+                add(1)
+                add(2)
+                add(3)
+                add(4)
+                add(5)
+            }
+            addListObject("apis") {
+                add {
+                    addProperty("path", "getName")
+                    addProperty("name", "1")
+                    addProperty("id", 1)
+                }
+                add {
+                    addProperty("path", "getAge")
+                    addProperty("name", "2")
+                    addProperty("id", 1719734598204)
+                }
+                add {
+                    addProperty("path", "getAddress")
+                    addProperty("name", "3")
+                }
+            }
+            addObject("timeout") {
+                addProperty("read", 10000)
+                addProperty("connect", 1)
+            }
+
+            withFlavor("free") {
+                addProperty("url", "www.debug.com")
+                addProperty("id", 1)
+            }
+
+        }
 //
 //
 //        create("SampleConfig") {
@@ -179,7 +179,7 @@ configWeaver {
 //                }
 //            }
 //        }
-//    }
+    }
 }
 
 

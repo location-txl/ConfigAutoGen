@@ -1,6 +1,7 @@
 package com.location.configgen.core.config
 
 import com.location.configgen.core.datanode.Node
+import com.location.configgen.core.datanode.toNode
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -11,27 +12,27 @@ interface ParseConfig {
     /**
      * 合并配置
      * @param pathList List<String> 配置文件路径 优先级从低到高
-     * @return String
+     * @return RawConfig  返回合并后的配置数据
      */
     fun mergeConfig(pathList: List<String>): RawConfig
 
     /**
      * 是否是有效的配置文件
-     * @param fileName String
+     * @param fileName String 文件名
      * @return Boolean
      */
     fun isValidFile(fileName: String): Boolean
 
     /**
      * 解析配置为对象节点
-     * @param string String
+     * @param config String
      * @return Node.ObjectNode
      */
     fun parseConfig(config: String): Node.ObjectNode
 }
 
 data class RawConfig(
-    val config: String, val attribute: ConfigAttribute = ConfigAttribute.DEFAULT
+    val content: String, val attribute: ConfigAttribute = ConfigAttribute.DEFAULT
 )
 
 data class ConfigAttribute(
@@ -42,41 +43,55 @@ data class ConfigAttribute(
     }
 }
 
+val defaultParseConfig: ParseConfig
+    get() = JsonSimpleParseConfig
+
 
 object JsonSimpleParseConfig : ParseConfig {
     override fun mergeConfig(pathList: List<String>): RawConfig {
         val jsonParser = JSONParser()
         var className: String? = null
-        val config = pathList.fold(null) { oldObj: Any?, path: String ->
+        var previousPath: String? = null
+        val config: Any? = pathList.fold(null) { oldObj: Any?, path: String ->
             val (jsonStr, tmpClassName) = readJsonFile(path)
             val newObj = jsonParser.parse(jsonStr)
-            if (oldObj == null) {
-                newObj
-            } else {
-                if (oldObj.javaClass.simpleName != newObj.javaClass.simpleName) {
-//                    throw IllegalArgumentException("json type not match s1 path:${path} type:${oldObj.javaClass.simpleName} s2 path:${oldData.jsonStr} type:${newObj.javaClass.simpleName}")
-                    //TODO
-                    throw IllegalArgumentException("json type not match s1 ")
+            try {
+                return@fold if (oldObj == null) {
+                    newObj
+                } else {
+                    require(oldObj.javaClass.simpleName == newObj.javaClass.simpleName) {
+                        "json type not match s1 path:${path} type:${oldObj.javaClass.simpleName} " +
+                                "s2 path:${previousPath} type:${newObj.javaClass.simpleName}"
+                    }
+
+                    if (oldObj is JSONObject) {
+                        mergeJsObj(oldObj, newObj as JSONObject)
+                    } else if (oldObj is JSONArray) {
+                        mergeJsArray(oldObj, newObj as JSONArray)
+                    }
+                    tmpClassName?.let { className = it }
+                    oldObj
                 }
-                if (oldObj is JSONObject) {
-                    mergeJsObj(oldObj, newObj as JSONObject)
-                } else if (oldObj is JSONArray) {
-                    mergeJsArray(oldObj, newObj as JSONArray)
-                }
-                oldData.copy(
-                    fileHeader = if (newData.fileHeader.classNameAutoGenerate.not()) {
-                        oldData.fileHeader
-                    } else {
-                        newData.fileHeader
-                    }, jsonStr = oldObj.toString()
-                )
+            } finally {
+                previousPath = path
             }
         }
+        println("testConfig:$config")
+        require(config != null)
+        return RawConfig(
+            content = config.toString(), attribute = ConfigAttribute(className)
+        )
     }
 
     override fun isValidFile(fileName: String): Boolean = fileName.endsWith(".json")
 
     override fun parseConfig(config: String): Node.ObjectNode {
+        val jsonParser = JSONParser()
+        val jsonObj = jsonParser.parse(config) as? JSONObject
+        require(jsonObj != null) {
+            "json config only support root element is JsonObject"
+        }
+        return jsonObj.toNode()
     }
 
 
@@ -84,16 +99,17 @@ object JsonSimpleParseConfig : ParseConfig {
         source.forEach { k, v ->
             if (v is JSONObject) {
                 val mV = merge.remove(k) ?: return@forEach
-                if ((mV is JSONObject).not()) {
-                    throw IllegalArgumentException("merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}")
+                require(mV is JSONObject) {
+                    "merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}"
                 }
-                mergeJsObj(v, mV as JSONObject)
+
+                mergeJsObj(v, mV)
             } else if (v is JSONArray) {
                 val mV = merge.remove(k) ?: return@forEach
-                if ((mV is JSONArray).not()) {
-                    throw IllegalArgumentException("merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}")
+                require(mV is JSONArray) {
+                    "merge json fail $k type not match mergeType is ${mV.javaClass.simpleName}"
                 }
-                mergeJsArray(v, mV as JSONArray)
+                mergeJsArray(v, mV)
             }
         }
         source.putAll(merge)
