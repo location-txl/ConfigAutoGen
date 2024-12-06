@@ -1,3 +1,4 @@
+//@class MainNetWork
 {
   "base_url": "https://www.xxx.com",
   "debug_log": false,

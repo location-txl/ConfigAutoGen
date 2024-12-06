@@ -15,7 +15,6 @@ import java.util.Locale
  * description：
  */
 abstract class ClassGenerate<T : ClassSpec<T>>(
-    protected val project: Project,
     protected val rootPackageName: String,
     protected val outputDir: String,
     private val rootNode: Node.ObjectNode,

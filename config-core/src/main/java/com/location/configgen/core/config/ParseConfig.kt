@@ -69,10 +69,10 @@ object JsonSimpleParseConfig : ParseConfig {
                     } else if (oldObj is JSONArray) {
                         mergeJsArray(oldObj, newObj as JSONArray)
                     }
-                    tmpClassName?.let { className = it }
                     oldObj
                 }
             } finally {
+                tmpClassName?.let { className = it }
                 previousPath = path
             }
         }
@@ -152,10 +152,11 @@ object JsonSimpleParseConfig : ParseConfig {
                 }
             }
         }
-
         return sb.toString() to className
     }
 
 
 }
+
+
 

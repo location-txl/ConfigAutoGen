@@ -18,7 +18,6 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
-import org.gradle.api.Project
 import java.io.File
 import kotlin.random.Random
 
@@ -29,13 +28,12 @@ import kotlin.random.Random
  * description：
  */
 class KotlinClassGenerate(
-    project: Project,
     packageName: String,
     outputDir: String,
     rootNode: Node.ObjectNode,
     className: String
 ) :
-    ClassGenerate<KotlinClassSpec>(project, packageName, outputDir, rootNode, className) {
+    ClassGenerate<KotlinClassSpec>(packageName, outputDir, rootNode, className) {
 
     override fun writeFile(fileComment: String, classSpec: KotlinClassSpec) {
         val typeSpec = classSpec.build()

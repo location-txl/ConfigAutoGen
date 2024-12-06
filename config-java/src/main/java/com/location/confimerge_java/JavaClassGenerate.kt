@@ -37,7 +37,7 @@ class JavaClassGenerate(
     rootNode: Node.ObjectNode,
     className: String
 ) :
-    ClassGenerate<JavaClassSpec>(project, packageName, outputDir, rootNode, className) {
+    ClassGenerate<JavaClassSpec>(packageName, outputDir, rootNode, className) {
     companion object {
         @VisibleForTesting
         var inTest = false

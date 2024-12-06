@@ -107,6 +107,8 @@ abstract class ConfigGenTask : DefaultTask() {
         val configSourcesList = mutableListOf<ConfigSource>()
         fileMaps.forEach { (_, pathList) ->
             val config = defaultParseConfig.mergeConfig(pathList)
+            println("pathList:$pathList")
+            println("config = ${config.attribute}")
 
             val configHeader = ConfigHeader(
                 config.attribute.className ?: File(pathList.first()).nameWithoutExtension.className

@@ -6,8 +6,8 @@ import com.location.confimerge_kotlin.KotlinClassGenerate
 
 class ConfigWeaverKotlinPlugin : BaseConfigWeaverPlugin() {
     override val createClassGenerate: CreateClassGenerateFunc
-        get() = { project, rootPackageName, outputDir, rootNode, rootClassName ->
-            KotlinClassGenerate(project, rootPackageName, outputDir, rootNode, rootClassName)
+        get() = { _, rootPackageName, outputDir, rootNode, rootClassName ->
+            KotlinClassGenerate(rootPackageName, outputDir, rootNode, rootClassName)
         }
 
 }
