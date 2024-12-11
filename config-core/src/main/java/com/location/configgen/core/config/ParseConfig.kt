@@ -1,5 +1,7 @@
 package com.location.configgen.core.config
 
+import com.google.gson.Gson
+import com.google.gson.JsonElement
 import com.location.configgen.core.datanode.Node
 import com.location.configgen.core.datanode.toNode
 import org.json.simple.JSONArray
@@ -46,6 +48,25 @@ data class ConfigAttribute(
 val defaultParseConfig: ParseConfig
     get() = JsonSimpleParseConfig
 
+object GsonParseConfig : ParseConfig {
+    private val gson by lazy { com.google.gson.Gson() }
+    override fun mergeConfig(pathList: List<String>): RawConfig {
+        throw UnsupportedOperationException("not support")
+    }
+
+    override fun isValidFile(fileName: String): Boolean = fileName.endsWith(".json")
+
+    override fun parseConfig(config: String): Node.ObjectNode {
+        try {
+            return gson.fromJson(config, Map::class.java).toNode()
+        } catch (e: Exception) {
+            throw IllegalArgumentException("parse config fail", e)
+        }
+    }
+
+
+}
+
 
 object JsonSimpleParseConfig : ParseConfig {
     override fun mergeConfig(pathList: List<String>): RawConfig {
@@ -91,7 +112,8 @@ object JsonSimpleParseConfig : ParseConfig {
         require(jsonObj != null) {
             "json config only support root element is JsonObject"
         }
-        return jsonObj.toNode()
+        error("1")
+//        return jsonObj.toNode()
     }
 
 
@@ -156,6 +178,38 @@ object JsonSimpleParseConfig : ParseConfig {
     }
 
 
+}
+
+
+fun main() {
+    testGson()
+}
+
+private fun testGson() {
+    val json = """
+        {
+            "name": "qq",
+            "age": 18,
+            "isMan": true,
+            "score": 99.9,
+            "height": 1.8,
+            "list": [1,2,3,4,5],
+            "obj": {
+                "name": "qq",
+                "age": 18,
+                "isMan": true,
+                "score": 99.9,
+                "height": 1.8,
+                "list": [1,2,3,4,5]
+            }
+        }
+    """.trimIndent()
+    val gson = Gson()
+    val jsonObj = gson.fromJson(json, JsonElement::class.java)
+    if (jsonObj.isJsonObject) {
+        println(gson.fromJson(jsonObj, Map::class.java))
+    }
+    println(jsonObj)
 }
 
 

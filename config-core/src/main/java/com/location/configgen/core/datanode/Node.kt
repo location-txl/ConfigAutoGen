@@ -1,8 +1,6 @@
 package com.location.configgen.core.datanode
 
 import com.location.configgen.core.config.checkPropertyValid
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
 import java.io.Serializable
 
 
@@ -63,10 +61,10 @@ sealed class Node(open val docs: String) {
 }
 
 
-fun JSONObject.toNode(): Node.ObjectNode {
+fun Map<*, *>.toNode(): Node.ObjectNode {
     val propertyMap = LinkedHashMap<String, Node?>()
 
-    forEach { k, v: Any? ->
+    forEach { (k, v: Any?) ->
         propertyMap[checkPropertyValid(k.toString())] = parseJsValue(v)
     }
     return Node.ObjectNode(propertyMap.toMap(), this.toString())
@@ -76,11 +74,11 @@ private fun parseJsValue(
     v: Any?,
 ): Node? {
     return when (v) {
-        is JSONObject -> {
+        is Map<*, *> -> {
             v.toNode()
         }
 
-        is JSONArray -> {
+        is List<*> -> {
             val nodeList = mutableListOf<Node?>()
             v.forEach { jsItem ->
                 nodeList.add(parseJsValue(jsItem).also { subNode ->

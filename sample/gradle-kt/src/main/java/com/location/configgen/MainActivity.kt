@@ -15,14 +15,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.appLog.text = getString(R.string.show_app_log, FeatureConfig.enableLog)
         binding.showPayPage.text = getString(R.string.show_pay_page, FeatureConfig.showPayPage)
-        binding.baseUrl.text = getString(R.string.base_url, NetworkConfig.baseUrl)
+        binding.baseUrl.text = getString(R.string.base_url, MainNetWork.baseUrl)
         binding.networkDebugLog.text =
-            getString(R.string.show_network_debug_log, NetworkConfig.debugLog)
+            getString(R.string.show_network_debug_log, MainNetWork.debugLog)
         binding.timeout.text = getString(
             R.string.net_work_timeout,
-            NetworkConfig.Timeout.connect,
-            NetworkConfig.Timeout.read,
-            NetworkConfig.Timeout.write
+            MainNetWork.Timeout.connect,
+            MainNetWork.Timeout.read,
+            MainNetWork.Timeout.write
         )
         FeatureConfig.enableLog
 
